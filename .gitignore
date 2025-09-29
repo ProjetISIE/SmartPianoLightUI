@@ -36,6 +36,10 @@
 *.exe
 *.out
 *.app
+build/
 
-# debug information files
+# Debug information files
 *.dwo
+
+# Dev env
+.direnv/
