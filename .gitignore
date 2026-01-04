@@ -36,10 +36,24 @@
 *.exe
 *.out
 *.app
-build/
+IHM
+PianoTrainerMDJV1
 
-# Debug information files
+# Debug information & Log files
 *.dwo
+log*.txt
 
-# Dev env
+# Generated build files
+build/
+Makefile*
+moc_*
+release/
+result
+
+# Environment & Editors
 .direnv/
+.qmake.stash
+.cache/
+.vscode
+.helix
+diagrams/

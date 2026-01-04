@@ -1,20 +1,14 @@
-BasedOnStyle: LLVM        # Base style
-IndentWidth: 4            # 4 spaces per indentation level
-TabWidth: 4
-UseTab: Never             # Use spaces, not tabs
-BreakBeforeBraces: Allman # Brace style
-AllowShortFunctionsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
-ColumnLimit: 90 # Allow two windows side-by-side
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
-PointerAlignment: Left # The pointer is a type
-SpacesBeforeTrailingComments: 2
-SpaceBeforeParens: ControlStatements
-SpaceAfterCStyleCast: true
-Cpp11BracedListStyle: true
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
-SortIncludes: true
-IncludeBlocks: Preserve
-DerivePointerAlignment: false
+---
+BasedOnStyle: LLVM # Style used in Clang…
+IndentWidth: 4     # Discourages too much nesting
+---
+Language: Cpp # C++ specific rules
+AllowShortBlocksOnASingleLine: Empty # Compact code
+AllowShortCaseExpressionOnASingleLine: true # Compact code
+AllowShortCaseLabelsOnASingleLine: true # Compact code
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse # Compact code
+AllowShortLoopsOnASingleLine: true # Compact code
+DerivePointerAlignment: false # Pointer is a type !
+PointerAlignment: Left # Pointer is a type !
+...
+

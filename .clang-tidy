@@ -1,0 +1,27 @@
+---
+Checks: >
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  clang-diagnostic-*,
+  concurrency-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+# cppcoreguidelines-*,
+CheckOptions:
+  readability-identifier-naming:
+    EnumConstantCase:      UPPER_CASE
+    ConstexprVariableCase: UPPER_CASE
+    GlobalConstantCase:    UPPER_CASE
+    ClassCase:             CamelCase
+    StructCase:            CamelCase
+    EnumCase:              CamelCase
+    FunctionCase:          camelBack
+    GlobalFunctionCase:    camelBack
+    VariableCase:          camelBack
+    GlobalVariableCase:    camelBack
+    ParameterCase:         camelBack
+    NamespaceCase:         lower_case
+...
+

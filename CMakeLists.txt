@@ -1,29 +1,32 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.20)
+project(
+  ui # Smart Piano User Interface
+  VERSION 0.0.0
+  LANGUAGES CXX)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-set(MAIN SmartPianoUI)
-project(${MAIN} LANGUAGES CXX VERSION 0.0.0)
-
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
-option(RPI "Build for Raspberry Pi" OFF) # cmake -DRP=ON to target Raspberry Pi
+# find_package(raylib REQUIRED)
+find_package(doctest REQUIRED)
 
-if(RPI)
-    message(STATUS "Raspberry Pi cross-compilation")
-    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/raspi.cmake"
-        CACHE FILEPATH "path to Raspberry Pi toolchain" FORCE)
-endif()
-
-add_executable(${MAIN} main.cpp)
-
-# Strict compiler warnings
-target_compile_options(${MAIN} PRIVATE
+add_compile_options(
     -Wall
     -Wextra
     -Wpedantic
     -Wshadow
-    -Wconversion
-    -Werror
+    # -Wconversion
+    # -Werror
 )
 
+add_subdirectory(src)
+include(GNUInstallDirs)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+include(CTest) # TESTS
+# add_subdirectory(test)
