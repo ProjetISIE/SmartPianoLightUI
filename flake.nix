@@ -36,10 +36,6 @@
       devShells = systems (
         pkgs: crossPkgs: {
           default =
-            # let imgui = imgui.override {
-            #   IMGUI_BUILD_GLFW_BINDING = true;
-            #   IMGUI_BUILD_OPENGL3_BINDING = true;
-            # }; in
             pkgs.mkShell.override
               {
                 stdenv = pkgs.clangStdenv; # Clang instead of GCC
@@ -61,11 +57,11 @@
                 nativeBuildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.ui.nativeBuildInputs;
                 buildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.ui.buildInputs;
                 # Export compile commands JSON for LSP and other tools
-                # shellHook = ''
-                #   mkdir --verbose build
-                #   cd build
-                #   cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-                # '';
+                shellHook = ''
+                  mkdir --verbose build
+                  cd build
+                  cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+                '';
               };
         }
       );

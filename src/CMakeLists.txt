@@ -1,12 +1,9 @@
-find_package(imgui CONFIG REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(OpenGL REQUIRED)
+find_package(raylib REQUIRED)
 
-add_executable(${PROJECT_NAME}
-    main.cpp
-)
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    imgui::imgui # The target from imgui-config.cmake
-    glfw         # GLFW target
-    OpenGL::GL   # OpenGL target
-)
+add_executable(${PROJECT_NAME} main.cpp)
+
+target_link_libraries(${PROJECT_NAME} raylib)
+
+if(UNIX AND NOT APPLE)
+    target_link_libraries(${PROJECT_NAME} m pthread dl rt X11)
+endif()

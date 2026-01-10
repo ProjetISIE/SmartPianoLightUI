@@ -1,12 +1,10 @@
 {
   cmake,
   doctest,
-  glfw,
-  imgui,
   libGL,
   ninja,
   pkg-config,
-  SDL2,
+  raylib,
   self,
   stdenv,
 }:
@@ -22,19 +20,8 @@ stdenv.mkDerivation {
     pkg-config # Build tool
   ];
   buildInputs = [
-    # glew # OpenGL Extension Wrangler Library
-    glfw
-    (imgui.override {
-      IMGUI_BUILD_GLFW_BINDING = true;
-      IMGUI_BUILD_OPENGL3_BINDING = true;
-    })
     libGL # GPU library
-    # raylib # Graphics library TEST
-    SDL2 # Graphics backend
+    raylib # Graphics library
     # wxwidgets_3_3 # GUI library TEST
   ];
-  # cmakeFlags = [
-  #   "-DIMGUI_ROOT=${imgui}"
-  #   "-DIMGUI_DIR=${imgui}/include/imgui"
-  # ];
 }
