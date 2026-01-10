@@ -25,8 +25,7 @@ stdenv.mkDerivation {
   buildInputs = [
     libGL # GPU library
     raylib # Graphics library
-    # wxwidgets_3_3 # GUI library TEST
-    # Linux specific
+    # Linux specific TODO don’t include on other platforms
     wayland
     libdecor
     xorg.libX11
