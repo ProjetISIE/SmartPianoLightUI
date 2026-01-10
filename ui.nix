@@ -1,12 +1,15 @@
 {
   cmake,
   doctest,
+  libdecor,
   libGL,
   ninja,
   pkg-config,
   raylib,
   self,
   stdenv,
+  wayland,
+  xorg,
 }:
 stdenv.mkDerivation {
   pname = "ui";
@@ -23,5 +26,13 @@ stdenv.mkDerivation {
     libGL # GPU library
     raylib # Graphics library
     # wxwidgets_3_3 # GUI library TEST
+    # Linux specific
+    wayland
+    libdecor
+    xorg.libX11
+    xorg.libXcursor
+    xorg.libXinerama
+    xorg.libXi
+    xorg.libXrandr
   ];
 }
