@@ -59,9 +59,9 @@
                 # Export compile commands JSON for LSP and other tools
                 shellHook = ''
                   export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath buildInputs}:$LD_LIBRARY_PATH"
-                  export XDG_SESSION_TYPE=wayland
-                  export SDL_VIDEODRIVER=wayland 
-                  export _JAVA_AWT_WM_NONREPARENTING=1
+                  # export XDG_SESSION_TYPE=wayland
+                  # export SDL_VIDEODRIVER=wayland 
+                  # export _JAVA_AWT_WM_NONREPARENTING=1
                   mkdir --verbose build
                   cd build
                   cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..

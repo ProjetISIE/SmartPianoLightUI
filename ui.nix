@@ -5,10 +5,10 @@
   libGL,
   ninja,
   pkg-config,
-  raylib,
   self,
   stdenv,
   wayland,
+  wxwidgets_3_3,
   xorg,
 }:
 stdenv.mkDerivation {
@@ -24,8 +24,7 @@ stdenv.mkDerivation {
   ];
   buildInputs = [
     libGL # GPU library
-    raylib # Graphics library
-    # wxwidgets_3_3 # GUI library TEST
+    wxwidgets_3_3 # GUI library
     # Linux specific
     wayland
     libdecor
