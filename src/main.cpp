@@ -1,6 +1,7 @@
 #include "Logger.hpp"
 #include "UdsTransport.hpp"
 #include <csignal>
+#include <raylib.h>
 
 static UdsTransport* g_transport = nullptr;
 
@@ -13,10 +14,22 @@ void signalHandler(int signum) {
     if (g_transport) g_transport->stop();
 }
 
-int main() { //(int argc, char* argv[]) {
+int main() {
     std::println("[MAIN] Hello Smart Piano");
-    std::signal(SIGINT, signalHandler);
-    std::signal(SIGTERM, signalHandler);
-    g_transport = nullptr; // Nettoyage
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
+    InitWindow(800, 450, "Smart Piano Trainer UI");
+    SetWindowMinSize(400, 300);
+    while (!WindowShouldClose()) {
+        int screenWidth = GetScreenWidth();
+        int screenHeight = GetScreenHeight();
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        DrawText("Welcome to Smart Piano!", screenWidth / 2 - 50,
+                 screenHeight / 2, 20, DARKGRAY);
+        DrawFPS(10, 10);
+        EndDrawing();
+    }
+    CloseWindow();
+    g_transport = nullptr;
     return 0;
 }
