@@ -1,6 +1,8 @@
 {
   cmake,
+  clang,
   doctest,
+  llvm,
   libdecor,
   libGL,
   ninja,
@@ -17,8 +19,10 @@ stdenv.mkDerivation {
   src = self;
   # doCheck = true; # Enable tests
   nativeBuildInputs = [
+    clang # C/C++ compiler
     cmake # Modern build tool
     doctest # Testing framework
+    llvm # For llvm-cov
     ninja # Modern build tool
     pkg-config # Build tool
   ];

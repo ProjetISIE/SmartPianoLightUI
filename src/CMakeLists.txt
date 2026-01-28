@@ -1,9 +1,12 @@
 find_package(raylib REQUIRED)
-
-add_executable(${PROJECT_NAME} main.cpp)
-
+add_library(${PROJECT_NAME} STATIC UdsTransport.cpp)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(${PROJECT_NAME} raylib)
-
 if(UNIX AND NOT APPLE)
-    target_link_libraries(${PROJECT_NAME} m pthread dl rt X11)
+  target_link_libraries(${PROJECT_NAME} m pthread dl rt X11)
 endif()
+
+add_executable(main main.cpp)
+target_link_libraries(main ${PROJECT_NAME})
+include(GNUInstallDirs)
+install(TARGETS main RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

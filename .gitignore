@@ -16,6 +16,8 @@
 
 # Debugger Files
 *.pdb
+*.profraw
+*.profdata
 
 # Compiled Dynamic libraries
 *.so
@@ -42,6 +44,7 @@ PianoTrainerMDJV1
 # Debug information & Log files
 *.dwo
 log*.txt
+*.log
 
 # Generated build files
 build/
@@ -57,4 +60,3 @@ result
 .vscode
 .helix
 diagrams/
-imgui.ini

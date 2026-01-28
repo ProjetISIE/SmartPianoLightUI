@@ -1,5 +1,5 @@
 {
-  description = "Nix flake C++ development environment";
+  description = "Nix flake C++23 development environment";
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   outputs =
     { self, nixpkgs }:
@@ -26,11 +26,17 @@
     in
     {
       packages = systems (
-        pkgs: crossPkgs: {
-          ui = pkgs.callPackage ./ui.nix { inherit self; };
-          cross-ui = crossPkgs.callPackage ./ui.nix { inherit self; };
-          default = self.packages.${pkgs.stdenv.hostPlatform.system}.ui;
-          cross = self.packages.${pkgs.stdenv.hostPlatform.system}.cross-ui;
+        pkgs: crossPkgs: rec {
+          smart-piano = pkgs.callPackage ./ui.nix {
+            inherit self;
+            stdenv = pkgs.clangStdenv;
+          };
+          cross-smart-piano = crossPkgs.callPackage ./ui.nix {
+            inherit self;
+            stdenv = crossPkgs.clangStdenv;
+          };
+          default = smart-piano;
+          cross = cross-smart-piano;
         }
       );
       devShells = systems (
@@ -43,19 +49,19 @@
               rec {
                 packages = with pkgs; [
                   clang-tools # Clang CLIs, including LSP
-                  # clang-uml # UML diagram generator
-                  # cmake-format # CMake formatter
+                  clang-uml # UML diagram generator
+                  cmake-format # CMake formatter
                   cmake-language-server # Cmake LSP
                   # cppcheck # C++ Static analysis
                   doxygen # Documentation generator
-                  # gtest # Testing framework
-                  # lcov # Code coverage
+                  # fluidsynth # JACK Synthesizer
                   lldb # Clang debug adapter
-                  neocmakelsp # CMake LSP
+                  # qsynth # FluidSynth GUI
+                  socat # Serial terminal for manual testing
                   # valgrind # Debugging and profiling
                 ];
-                nativeBuildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.ui.nativeBuildInputs;
-                buildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.ui.buildInputs;
+                nativeBuildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.smart-piano.nativeBuildInputs;
+                buildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.smart-piano.buildInputs;
                 # Export compile commands JSON for LSP and other tools
                 shellHook = ''
                   export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath buildInputs}:$LD_LIBRARY_PATH"
@@ -64,7 +70,7 @@
                   # export _JAVA_AWT_WM_NONREPARENTING=1
                   mkdir --verbose build
                   cd build
-                  cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+                  cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
                 '';
               };
         }
