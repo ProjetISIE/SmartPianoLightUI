@@ -34,9 +34,10 @@ Smart Piano est un système aidant à progresser au piano en s'entrainant à en
 jouer d’une manière optimisant l’apprentissage grâce à des exercices
 intelligents.
 
-Ceci est la partie interface utilisateur, communicant avec le moteur. Elle est
-spécifiquement développée pour être légère, avoir peu de dépendances et être
-aisée à embarquer sur une cible ARM 32 bit (tel qu’une Raspberry Pi 4).
+Ceci est la partie interface utilisateur, communicant avec le moteur, développée
+avec [raylib]. Elle est spécifiquement développée pour être légère, avoir peu de
+dépendances et être aisée à embarquer sur une cible ARM 32 bit (tel qu’une
+Raspberry Pi 4).
 
 L’utilisateur interagit via un **clavier MIDI** connecté au dispositif Smart
 Piano, sur lequel fonctionne l’application.
@@ -346,6 +347,7 @@ timestamps.
 [llvm-cov]: https://llvm.org/docs/CommandGuide/llvm-cov.html
 [Nix]: https://nixos.org
 [Polytech Tours]: https://polytech.univ-tours.fr
+[raylib]: https://www.raylib.com
 [socat]: http://www.dest-unreach.org/socat
 [tio]: https://github.com/tio/tio
 [VS Code]: https://code.visualstudio.com
