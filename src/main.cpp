@@ -1,9 +1,6 @@
 #include "Logger.hpp"
-#include "UdsTransport.hpp"
 #include <csignal>
 #include <raylib.h>
-
-static UdsTransport* g_transport = nullptr;
 
 /**
  * @brief Gestionnaire de signaux pour arrêts propres
@@ -11,7 +8,6 @@ static UdsTransport* g_transport = nullptr;
  */
 void signalHandler(int signum) {
     Logger::log("[MAIN] Signal reçu: {}", signum);
-    if (g_transport) g_transport->stop();
 }
 
 int main() {
@@ -30,6 +26,5 @@ int main() {
         EndDrawing();
     }
     CloseWindow();
-    g_transport = nullptr;
     return 0;
 }
