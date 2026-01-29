@@ -315,14 +315,6 @@ tests et l'extensibilité.
 
 [`main`](src/main.cpp): Point d'entrée de l'application.
 
-[`ITransport`](include/ITransport.hpp) Interface définissant la communication
-bidirectionnelle client-serveur.
-
-- [`UdsTransport`](include/UdsTransport.hpp) Implémentation via Unix Domain
-  Socket avec sérialisation/parsing de messages selon le protocole défini
-- [`Message`](include/Message.hpp) Structure immuable représentant un message du
-  protocole (type + champs clé-valeur)
-
 ### Utilitaires
 
 [`Logger`](include/Logger.hpp) Système de journalisation thread-safe avec

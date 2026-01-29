@@ -38,4 +38,8 @@ stdenv.mkDerivation {
     xorg.libXi
     xorg.libXrandr
   ];
+  installPhase = ''
+    mkdir --parents --verbose $out/bin
+    cp --verbose src/main $out/bin/ui
+  '';
 }

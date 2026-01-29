@@ -59,7 +59,5 @@ add_custom_target(
   COMMENT "Rapport de couverture HTML généré: ${CMAKE_BINARY_DIR}/coverage")
 add_dependencies(run main)
 add_dependencies(tests LoggerTest)
-add_dependencies(tests MessageTest)
-add_dependencies(tests UdsTransportTest)
 add_dependencies(tests integrationTest)
 add_dependencies(coverage merge_coverage_data)

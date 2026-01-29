@@ -1,8 +1,15 @@
 {
   description = "Nix flake C++23 development environment";
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    engine.url = "github:ProjetISIE/SmartPianoEngine";
+  };
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+      engine,
+    }:
     let
       systems =
         f:
@@ -57,7 +64,7 @@
                   # fluidsynth # JACK Synthesizer
                   lldb # Clang debug adapter
                   # qsynth # FluidSynth GUI
-                  socat # Serial terminal for manual testing
+                  # socat # Serial terminal for manual testing
                   # valgrind # Debugging and profiling
                 ];
                 nativeBuildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.smart-piano.nativeBuildInputs;
