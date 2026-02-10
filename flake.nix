@@ -38,11 +38,13 @@
             inherit self;
             stdenv = pkgs.clangStdenv;
             engine = engine.packages.${pkgs.stdenv.hostPlatform.system}.default;
+            inherit (pkgs) glfw;
           };
           cross-smart-piano = crossPkgs.callPackage ./ui.nix {
             inherit self;
             stdenv = crossPkgs.clangStdenv;
             engine = engine.packages.${crossPkgs.stdenv.hostPlatform.system}.default;
+            inherit (crossPkgs) glfw;
           };
           default = smart-piano;
           cross = cross-smart-piano;

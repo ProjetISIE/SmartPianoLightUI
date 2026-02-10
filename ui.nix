@@ -3,6 +3,7 @@
   clang,
   doctest,
   engine,
+  glfw,
   llvm,
   libdecor,
   libGL,
@@ -28,7 +29,8 @@ stdenv.mkDerivation {
     pkg-config # Build tool
   ];
   buildInputs = [
-    engine # Smart piano engine
+    engine # SmartPianoEngine
+    glfw # Raylib dependency
     libGL # GPU library
     raylib # Graphics library
     # Linux specific TODO don’t include on other platforms
@@ -40,6 +42,11 @@ stdenv.mkDerivation {
     xorg.libXi
     xorg.libXrandr
   ];
+
+  preConfigure = ''
+    cmakeFlagsArray+=("-DENGINE_PATH=${engine}")
+  '';
+
   installPhase = ''
     mkdir --parents --verbose $out/bin
     cp --verbose src/main $out/bin/ui
