@@ -4,7 +4,7 @@ find_package(raylib REQUIRED)
 find_path(ENGINE_INCLUDE_DIR NAMES Message.hpp HINTS "${ENGINE_PATH}/include" REQUIRED)
 find_library(ENGINE_LIBRARY NAMES enginecomm HINTS "${ENGINE_PATH}/lib" REQUIRED)
 
-add_executable(main main.cpp)
+add_executable(main main.cpp Communication.cpp)
 
 target_include_directories(
   main
