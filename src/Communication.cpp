@@ -1,17 +1,17 @@
 #include "Communication.hpp"
 #include "Logger.hpp"
+#include <format>
 #include <sstream>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 
 std::string serialize(const Message& msg) {
-    std::stringstream ss;
-    ss << msg.getType() << "\n";
+    std::string result = std::format("{}\n", msg.getType());
     for (const auto& field : msg.getFields())
-        ss << field.first << "=" << field.second << "\n";
-    ss << "\n";
-    return ss.str();
+        result += std::format("{}={}\n", field.first, field.second);
+    result += "\n";
+    return result;
 }
 
 Message deserialize(const std::string& data) {
@@ -31,100 +31,115 @@ Message deserialize(const std::string& data) {
     return Message(type, fields);
 }
 
-Communication::Communication(std::string path) : socket_path(std::move(path)) {}
+Communication::Communication(std::string path) : socketPath(std::move(path)) {}
 
-Communication::~Communication() { disconnect(); }
+Communication::~Communication() { this->disconnect(); }
 
 bool Communication::connect() {
-    if (isConnected()) {
-        Logger::log("[Comm] Already connected.");
+    if (this->isConnected()) {
+        Logger::log("[Comm] Déjà connecté");
         return true;
     }
-    sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sock_fd < 0) {
-        Logger::log("[Comm] Failed to create socket.");
+
+    this->sockFd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (this->sockFd < 0) {
+        Logger::log("[Comm] Échec création socket");
         return false;
     }
-    struct sockaddr_un server_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sun_family = AF_UNIX;
-    strncpy(server_addr.sun_path, socket_path.c_str(),
-            sizeof(server_addr.sun_path) - 1);
-    if (::connect(sock_fd, (struct sockaddr*)&server_addr,
-                  sizeof(server_addr)) < 0) {
-        Logger::log("[Comm] Failed to connect to socket: {}", socket_path);
-        close(sock_fd);
-        sock_fd = -1;
+
+    struct sockaddr_un serverAddr;
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sun_family = AF_UNIX;
+    strncpy(serverAddr.sun_path, this->socketPath.c_str(),
+            sizeof(serverAddr.sun_path) - 1);
+
+    if (::connect(this->sockFd, (struct sockaddr*)&serverAddr,
+                  sizeof(serverAddr)) < 0) {
+        Logger::log("[Comm] Échec connexion socket: {}", this->socketPath);
+        close(this->sockFd);
+        this->sockFd = -1;
         return false;
     }
-    Logger::log("[Comm] Connected to {}", socket_path);
-    running = true;
-    listener_thread = std::thread(&Communication::listen, this);
+
+    Logger::log("[Comm] Connecté à {}", this->socketPath);
+    this->running = true;
+    this->listenerThread = std::thread(&Communication::listen, this);
+
     return true;
 }
 
 void Communication::disconnect() {
-    if (!isConnected()) return;
-    running = false;
-    if (sock_fd != -1) {
-        shutdown(sock_fd, SHUT_RDWR);
-        close(sock_fd);
-        sock_fd = -1;
-        Logger::log("[Comm] Disconnected.");
+    if (!this->isConnected()) return;
+
+    this->running = false;
+    if (this->sockFd != -1) {
+        shutdown(this->sockFd, SHUT_RDWR);
+        close(this->sockFd);
+        this->sockFd = -1;
+        Logger::log("[Comm] Déconnecté");
     }
-    if (listener_thread.joinable()) listener_thread.join();
+
+    if (this->listenerThread.joinable()) this->listenerThread.join();
 }
 
-bool Communication::isConnected() const { return sock_fd != -1 && running; }
+bool Communication::isConnected() const {
+    return this->sockFd != -1 && this->running;
+}
 
 void Communication::send(const Message& msg) {
-    if (!isConnected()) {
-        Logger::log("[Comm] Not connected. Cannot send message.");
+    if (!this->isConnected()) {
+        Logger::log("[Comm] Non connecté. Ne peut envoyer de message.");
         return;
     }
     std::string data = serialize(msg);
-    if (::write(sock_fd, data.c_str(), data.length()) < 0) {
-        Logger::log("[Comm] Failed to write to socket.");
-        disconnect();
-    } else Logger::log("[Comm] Sent: {}", msg.getType());
+    if (::write(this->sockFd, data.c_str(), data.length()) < 0) {
+        Logger::log("[Comm] Échec écriture socket.");
+        this->disconnect();
+    } else Logger::log("[Comm] Envoyé: {}", msg.getType());
 }
 
 std::optional<Message> Communication::popMessage() {
-    std::lock_guard<std::mutex> lock(queue_mutex);
-    if (message_queue.empty()) return std::nullopt;
-    Message msg = message_queue.front();
-    message_queue.pop();
+    std::lock_guard<std::mutex> lock(this->queueMutex);
+    if (this->messageQueue.empty()) return std::nullopt;
+    Message msg = this->messageQueue.front();
+    this->messageQueue.pop();
     return msg;
 }
 
 void Communication::listen() {
     char buffer[4096];
-    std::string current_message_data;
-    while (running) {
-        ssize_t bytes_read = ::read(sock_fd, buffer, sizeof(buffer) - 1);
-        if (bytes_read > 0) {
-            buffer[bytes_read] = '\0';
-            current_message_data += buffer;
-            size_t end_of_message_pos;
-            while ((end_of_message_pos = current_message_data.find("\n\n")) !=
+    std::string currentMessageData;
+
+    while (this->running) {
+        ssize_t bytesRead = ::read(this->sockFd, buffer, sizeof(buffer) - 1);
+
+        if (bytesRead > 0) {
+            buffer[bytesRead] = '\0';
+            currentMessageData += buffer;
+
+            size_t endOfMessagePos;
+            while ((endOfMessagePos = currentMessageData.find("\n\n")) !=
                    std::string::npos) {
-                std::string msg_data =
-                    current_message_data.substr(0, end_of_message_pos);
-                Message msg = deserialize(msg_data);
-                std::lock_guard<std::mutex> lock(queue_mutex);
-                message_queue.push(msg);
-                Logger::log("[Comm] Received: {}", msg.getType());
-                current_message_data.erase(0, end_of_message_pos + 2);
+                std::string msgData =
+                    currentMessageData.substr(0, endOfMessagePos);
+                Message msg = deserialize(msgData);
+
+                {
+                    std::lock_guard<std::mutex> lock(this->queueMutex);
+                    this->messageQueue.push(msg);
+                }
+                Logger::log("[Comm] Reçu: {}", msg.getType());
+
+                currentMessageData.erase(0, endOfMessagePos + 2);
             }
-        } else if (bytes_read == 0) {
-            Logger::log("[Comm] Server closed connection.");
-            running = false; // Stop
+        } else if (bytesRead == 0) {
+            Logger::log("[Comm] Le serveur a fermé la connexion");
+            this->running = false;
         } else {
-            if (running) // Avoid error message on intentional disconnect
-                Logger::log("[Comm] Failed to read from socket.");
-            running = false; // Stop
+            if (this->running) Logger::log("[Comm] Échec lecture socket");
+            this->running = false;
         }
     }
-    // Déconnecte si erreur ou fermeteur connection serveur
-    if (sock_fd != -1) disconnect();
+
+    if (this->sockFd != -1) this->disconnect();
 }

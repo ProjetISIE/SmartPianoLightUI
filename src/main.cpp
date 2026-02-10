@@ -17,9 +17,9 @@ enum class GameState {
     GAME_OVER
 };
 
-std::string challenge_text;
-std::string result_text;
-std::string game_over_text;
+std::string challengeText;
+std::string resultText;
+std::string gameOverText;
 
 /**
  * @brief Gestionnaire de signaux pour arrêts propres
@@ -30,74 +30,75 @@ void signalHandler(int signum) {
 }
 
 int main() {
-    Logger::log("[MAIN] Hello Smart Piano");
-    GameState current_state = GameState::DISCONNECTED;
+    Logger::log("[MAIN] Démarrage UI Smart Piano");
+    GameState currentState = GameState::DISCONNECTED;
     auto comm = std::make_unique<Communication>();
-    if (comm->connect()) current_state = GameState::CONNECTED;
+    if (comm->connect()) currentState = GameState::CONNECTED;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
-    InitWindow(800, 600, "Smart Piano Trainer UI");
+    InitWindow(800, 600, "Smart Piano Trainer");
     SetWindowMinSize(600, 400);
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
         if (comm->isConnected()) {
-            if (auto msg_opt = comm->popMessage()) {
-                Message msg = *msg_opt;
-                Logger::log("[MAIN] Processing message: {}", msg.getType());
+            if (auto msgOpt = comm->popMessage()) {
+                Message msg = *msgOpt;
+                Logger::log("[MAIN] Traitement message: {}", msg.getType());
                 if (msg.getType() == "ack") {
                     if (msg.getField("status") == "ok") {
-                        current_state = GameState::CONFIGURED;
+                        currentState = GameState::CONFIGURED;
                     } else {
-                        current_state = GameState::CONNECTED;
-                        challenge_text =
-                            "Config error: " + msg.getField("message");
+                        currentState = GameState::CONNECTED;
+                        challengeText =
+                            "Erreur configuration: " + msg.getField("message");
                     }
                 } else if (msg.getType() == "note") {
-                    challenge_text = "Play note: " + msg.getField("note");
-                    current_state = GameState::CHALLENGE_ACTIVE;
+                    challengeText = "Jouez la note: " + msg.getField("note");
+                    currentState = GameState::CHALLENGE_ACTIVE;
                 } else if (msg.getType() == "chord") {
-                    challenge_text = "Play chord: " + msg.getField("name") +
-                                     " (" + msg.getField("notes") + ")";
-                    current_state = GameState::CHALLENGE_ACTIVE;
+                    challengeText = "Jouez l'accord: " + msg.getField("name") +
+                                    " (" + msg.getField("notes") + ")";
+                    currentState = GameState::CHALLENGE_ACTIVE;
                 } else if (msg.getType() == "result") {
-                    result_text = "Correct: " + msg.getField("correct") +
-                                  " | Incorrect: " + msg.getField("incorrect");
-                    current_state = GameState::SHOWING_RESULT;
+                    resultText = "Correct: " + msg.getField("correct") +
+                                 " | Incorrect: " + msg.getField("incorrect");
+                    currentState = GameState::SHOWING_RESULT;
                 } else if (msg.getType() == "over") {
-                    game_over_text =
-                        "Game Over! Total: " + msg.getField("total") +
-                        ", Perfect: " + msg.getField("perfect");
-                    current_state = GameState::GAME_OVER;
+                    gameOverText =
+                        "Partie terminée ! Total: " + msg.getField("total") +
+                        ", Parfait: " + msg.getField("perfect");
+                    currentState = GameState::GAME_OVER;
                 } else if (msg.getType() == "error") {
-                    challenge_text = "Engine Error: " + msg.getField("message");
+                    challengeText = "Erreur moteur: " + msg.getField("message");
                 }
             }
-        } else current_state = GameState::DISCONNECTED;
+        } else currentState = GameState::DISCONNECTED;
+
         if (IsKeyPressed(KEY_S)) { // Start Game
-            if (current_state == GameState::CONNECTED ||
-                current_state == GameState::CONFIGURED ||
-                current_state == GameState::GAME_OVER) {
-                Message config_msg("config", {{"game", "note"}});
-                comm->send(config_msg);
-                current_state = GameState::WAITING_FOR_ACK;
+            if (currentState == GameState::CONNECTED ||
+                currentState == GameState::CONFIGURED ||
+                currentState == GameState::GAME_OVER) {
+                Message configMsg("config", {{"game", "note"}});
+                comm->send(configMsg);
+                currentState = GameState::WAITING_FOR_ACK;
             }
         }
         if (IsKeyPressed(KEY_R)) { // Ready for next challenge
-            if (current_state == GameState::CONFIGURED ||
-                current_state == GameState::SHOWING_RESULT) {
-                Message ready_msg("ready");
-                comm->send(ready_msg);
-                challenge_text = "Attente d’un challenge...";
-                current_state = GameState::WAITING_FOR_CHALLENGE;
+            if (currentState == GameState::CONFIGURED ||
+                currentState == GameState::SHOWING_RESULT) {
+                Message readyMsg("ready");
+                comm->send(readyMsg);
+                challengeText = "En attente du défi...";
+                currentState = GameState::WAITING_FOR_CHALLENGE;
             }
         }
         if (IsKeyPressed(KEY_Q)) { // Quit game
-            if (current_state != GameState::CONNECTED &&
-                current_state != GameState::DISCONNECTED) {
-                Message quit_msg("quit");
-                comm->send(quit_msg);
-                current_state = GameState::CONNECTED;
+            if (currentState != GameState::CONNECTED &&
+                currentState != GameState::DISCONNECTED) {
+                Message quitMsg("quit");
+                comm->send(quitMsg);
+                currentState = GameState::CONNECTED;
             }
         }
 
@@ -107,53 +108,50 @@ int main() {
 
         const int screenWidth = GetScreenWidth();
         const int screenHeight = GetScreenHeight();
-        int y_pos = 50;
+        int yPos = 50;
 
-        switch (current_state) {
+        switch (currentState) {
         case GameState::DISCONNECTED:
-            DrawText("Connection au moteur (le lancer avant l’ui)...",
-                     screenWidth / 2 - 150, screenHeight / 2 - 10, 30,
-                     LIGHTGRAY);
+            DrawText("Connexion au moteur...", screenWidth / 2 - 150,
+                     screenHeight / 2 - 10, 30, LIGHTGRAY);
             break;
         case GameState::CONNECTED:
             DrawText("Connecté !", screenWidth / 2 - 80, screenHeight / 2 - 20,
                      30, LIME);
-            DrawText("Appuyer 'S' pour lancer un jeu de note",
-                     screenWidth / 2 - 150, screenHeight / 2 + 20, 20,
-                     DARKGRAY);
+            DrawText("Appuyer sur 'S' pour commencer", screenWidth / 2 - 150,
+                     screenHeight / 2 + 20, 20, DARKGRAY);
             break;
         case GameState::WAITING_FOR_ACK:
-            DrawText("Configuration Serveur (partie)...", screenWidth / 2 - 120,
+            DrawText("Configuration de la partie...", screenWidth / 2 - 120,
                      screenHeight / 2 - 10, 20, DARKGRAY);
             break;
         case GameState::CONFIGURED:
-            DrawText("Serveur configuré !", screenWidth / 2 - 110,
+            DrawText("Partie configurée !", screenWidth / 2 - 110,
                      screenHeight / 2 - 20, 30, LIME);
-            DrawText("Appuyer 'R' (Ready) pour challenge suivant",
-                     screenWidth / 2 - 150, screenHeight / 2 + 20, 20,
+            DrawText("Appuyer sur 'R' pour le prochain défi",
+                     screenWidth / 2 - 160, screenHeight / 2 + 20, 20,
                      DARKGRAY);
             break;
         case GameState::WAITING_FOR_CHALLENGE:
         case GameState::CHALLENGE_ACTIVE:
-            DrawText(challenge_text.c_str(), 100, y_pos, 40, DARKBLUE);
-            if (!result_text.empty()) {
-                DrawText(result_text.c_str(), 100, y_pos + 60, 20, GRAY);
-            }
+            DrawText(challengeText.c_str(), 100, yPos, 40, DARKBLUE);
+            if (!resultText.empty())
+                DrawText(resultText.c_str(), 100, yPos + 60, 20, GRAY);
             break;
         case GameState::SHOWING_RESULT:
-            DrawText(challenge_text.c_str(), 100, y_pos, 40, LIGHTGRAY);
-            DrawText(result_text.c_str(), 100, y_pos + 60, 30, MAROON);
-            DrawText("Appuyer 'R' (Ready) pour challenge suivant", 100,
-                     y_pos + 120, 20, DARKGRAY);
+            DrawText(challengeText.c_str(), 100, yPos, 40, LIGHTGRAY);
+            DrawText(resultText.c_str(), 100, yPos + 60, 30, MAROON);
+            DrawText("Appuyer sur 'R' pour le prochain défi", 100, yPos + 120,
+                     20, DARKGRAY);
             break;
         case GameState::GAME_OVER:
-            DrawText(game_over_text.c_str(), 100, y_pos, 40, BLUE);
-            DrawText("Appuyer 'S' pour lancer (Start) une partie", 100,
-                     y_pos + 60, 20, DARKGRAY);
+            DrawText(gameOverText.c_str(), 100, yPos, 40, BLUE);
+            DrawText("Appuyer sur 'S' pour une nouvelle partie", 100, yPos + 60,
+                     20, DARKGRAY);
             break;
         }
-        DrawText("S = Start, R = Ready, Q = Quit", 10, screenHeight - 30, 15,
-                 GRAY);
+        DrawText("S = Commencer, R = Prêt, Q = Quitter", 10, screenHeight - 30,
+                 15, GRAY);
         EndDrawing();
     }
     comm->disconnect();

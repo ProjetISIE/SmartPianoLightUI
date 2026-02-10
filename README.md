@@ -132,11 +132,17 @@ la solution préconisée (car reproductible) est d’utiliser `nix build` ; ou
 
 L’application peut être lancée avec `./result/bin/main`, ou `./build/main` si
 compilé avec [CMake] (ou automatiquement après un build avec
-`cmake --build build --target run`).
+`cmake --build build --target run`). Le moteur doit être démarré et écouter sur
+`/tmp/smartpiano.sock`.
+
+> Pour accélérer les opérations impliquant `cmake`, indiquer le nombre `N` de
+> threads correspondant au nombre de cœurs de processeur avec `-jN` (ex.
+> `cmake --build build -j4`) ou `--jobs N` pour `nix` (ex.
+> `nix build .#cross --jobs 4`)
 
 ### Test Manuel
 
-Lancer l’application, visualiser.
+Lancer l’application, visualiser, intéragir.
 
 ### Tests Automatiques
 
@@ -146,7 +152,17 @@ avec la commande `cmake --build build --target tests`.
 Ils sont automatiquement exécutés lors des builds avec [Nix].
 
 De plus, il est possible de générer un rapport de couverture de code avec
-`cmake --build build --target coverage`.
+`cmake --build build --target coverage`, puis d’en visualiser un résumé avec
+`llvm-cov report build/src/main -instr-profile=build/coverage.profdata -ignore-filename-regex="test/.*"`.
+
+Sur la branche principale `main`, tous les tests automatiques (unitaires,
+intégration) doivent passer parfaitement, avec une couverture de `100%` des
+fonctions et d’au moins `90%` des lignes de code. Il faut s’assurer qu’une
+branche répond à ces critères avant de la fusionner dans `main`.
+
+L’objectif est de couvrir `100%` des lignes de codes, mais certains cas peuvent
+être trop difficiles à simuler en tests automatiques, auquel cas, ils doivent
+être commentés comme tel.
 
 ## Conventions de Code
 
