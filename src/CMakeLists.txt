@@ -1,19 +1,14 @@
 find_package(raylib REQUIRED)
-# add_library(${PROJECT_NAME} STATIC *.cpp)
-# target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
-# target_link_libraries(${PROJECT_NAME} raylib)
-# if(UNIX AND NOT APPLE)
-#   target_link_libraries(${PROJECT_NAME} m pthread dl rt X11)
-# endif()
+find_package(engine REQUIRED)
 
 add_executable(main main.cpp)
-# target_link_libraries(main ${PROJECT_NAME})
-
-# include(GNUInstallDirs)
-# install(TARGETS main RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 target_include_directories(main PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(main raylib)
+target_link_libraries(
+  main
+  engine
+  raylib
+)
 if(UNIX AND NOT APPLE)
   target_link_libraries(main m pthread dl rt X11)
 endif()

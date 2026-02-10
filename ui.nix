@@ -2,6 +2,7 @@
   cmake,
   clang,
   doctest,
+  engine,
   llvm,
   libdecor,
   libGL,
@@ -27,6 +28,7 @@ stdenv.mkDerivation {
     pkg-config # Build tool
   ];
   buildInputs = [
+    engine # Smart piano engine
     libGL # GPU library
     raylib # Graphics library
     # Linux specific TODO don’t include on other platforms
