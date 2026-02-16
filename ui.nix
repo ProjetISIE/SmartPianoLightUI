@@ -5,21 +5,19 @@
   engine,
   glfw,
   llvm,
-  libdecor,
   libGL,
   ninja,
   pkg-config,
+  pkgs,
   raylib,
   self,
   stdenv,
-  wayland,
-  xorg,
 }:
 stdenv.mkDerivation {
   pname = "ui";
   version = "0.0.0";
   src = self;
-  # doCheck = true; # Enable tests
+  # doCheck = true; # Enable tests TODO
   nativeBuildInputs = [
     clang # C/C++ compiler
     cmake # Modern build tool
@@ -33,14 +31,15 @@ stdenv.mkDerivation {
     glfw # Raylib dependency
     libGL # GPU library
     raylib # Graphics library
-    # Linux specific TODO don’t include on other platforms
-    wayland
-    libdecor
-    xorg.libX11
-    xorg.libXcursor
-    xorg.libXinerama
-    xorg.libXi
-    xorg.libXrandr
+  ]
+  ++ pkgs.lib.optionals stdenv.isLinux [
+    pkgs.wayland
+    pkgs.libdecor
+    pkgs.xorg.libX11
+    pkgs.xorg.libXcursor
+    pkgs.xorg.libXinerama
+    pkgs.xorg.libXi
+    pkgs.xorg.libXrandr
   ];
 
   preConfigure = ''

@@ -35,16 +35,17 @@
       packages = systems (
         pkgs: crossPkgs: rec {
           smart-piano = pkgs.callPackage ./ui.nix {
-            inherit self;
-            stdenv = pkgs.clangStdenv;
-            engine = engine.packages.${pkgs.stdenv.hostPlatform.system}.default;
+            inherit self pkgs;
             inherit (pkgs) glfw;
+            engine = engine.packages.${pkgs.stdenv.hostPlatform.system}.default;
+            stdenv = pkgs.clangStdenv;
           };
           cross-smart-piano = crossPkgs.callPackage ./ui.nix {
             inherit self;
-            stdenv = crossPkgs.clangStdenv;
-            engine = engine.packages.${crossPkgs.stdenv.hostPlatform.system}.default;
             inherit (crossPkgs) glfw;
+            engine = engine.packages.${crossPkgs.stdenv.hostPlatform.system}.default;
+            pkgs = crossPkgs;
+            stdenv = crossPkgs.clangStdenv;
           };
           default = smart-piano;
           cross = cross-smart-piano;
