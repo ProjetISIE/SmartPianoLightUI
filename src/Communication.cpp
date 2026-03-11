@@ -4,6 +4,7 @@
 #include <sstream>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <thread>
 #include <unistd.h>
 
 std::string serialize(const Message& msg) {
@@ -69,7 +70,8 @@ bool Communication::connect() {
 }
 
 void Communication::disconnect() {
-    if (!this->isConnected()) return;
+    // Guard: nothing to do if socket already closed and thread not running
+    if (this->sockFd == -1 && !this->listenerThread.joinable()) return;
 
     this->running = false;
     if (this->sockFd != -1) {
@@ -79,7 +81,10 @@ void Communication::disconnect() {
         Logger::log("[Comm] Déconnecté");
     }
 
-    if (this->listenerThread.joinable()) this->listenerThread.join();
+    // Avoid joining the listener thread from within itself (would deadlock)
+    if (this->listenerThread.joinable() &&
+        this->listenerThread.get_id() != std::this_thread::get_id())
+        this->listenerThread.join();
 }
 
 bool Communication::isConnected() const {
@@ -140,6 +145,5 @@ void Communication::listen() {
             this->running = false;
         }
     }
-
-    if (this->sockFd != -1) this->disconnect();
+    // Socket cleanup is handled by disconnect() called from the main thread
 }
