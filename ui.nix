@@ -33,9 +33,9 @@ stdenv.mkDerivation {
   buildInputs = [
     engine # SmartPianoEngine
     glfw # Raylib dependency
-    libGL # GPU library
     raylib # Graphics library
   ]
+  ++ lib.optional (!stdenv.isDarwin) libGL # GPU library (null in nixpkgs on Darwin)
   ++ lib.optionals stdenv.isLinux [
     wayland
     libdecor
@@ -46,7 +46,7 @@ stdenv.mkDerivation {
     libxrandr
   ];
   preConfigure = ''
-    cmakeFlagsArray+=("-DENGINE_PATH=${engine}")
+    cmakeFlagsArray+=("-DENGINE_PATH=${engine}" "-DCOVERAGE=OFF")
   '';
   installPhase = ''
     mkdir --parents --verbose $out/bin
