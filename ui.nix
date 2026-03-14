@@ -8,13 +8,17 @@
   lib,
   libdecor,
   libGL,
+  libx11,
+  libxcursor,
+  libxinerama,
+  libxi,
+  libxrandr,
   ninja,
   pkg-config,
   raylib,
   self,
   stdenv,
   wayland,
-  xorg,
 }:
 stdenv.mkDerivation {
   pname = "ui";
@@ -23,12 +27,12 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     clang # C/C++ compiler
     cmake # Modern build tool
-    doctest # Testing framework
     llvm # For llvm-cov
     ninja # Modern build tool
     pkg-config # Build tool
   ];
   buildInputs = [
+    doctest # Testing framework
     engine # SmartPianoEngine
     glfw # Raylib dependency
     libGL # GPU library
@@ -37,11 +41,11 @@ stdenv.mkDerivation {
   ++ lib.optionals stdenv.isLinux [
     wayland
     libdecor
-    xorg.libX11
-    xorg.libXcursor
-    xorg.libXinerama
-    xorg.libXi
-    xorg.libXrandr
+    libx11
+    libxcursor
+    libxinerama
+    libxi
+    libxrandr
   ];
   preConfigure = ''
     cmakeFlagsArray+=("-DENGINE_PATH=${engine}")
