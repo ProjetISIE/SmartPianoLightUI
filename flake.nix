@@ -1,5 +1,5 @@
 {
-  description = "Nix flake C++23 development environment";
+  description = "Nix flake C++23 cross development environment";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     engine.url = "github:ProjetISIE/SmartPianoEngine";
@@ -11,54 +11,53 @@
       engine,
     }:
     let
-      systems =
-        f:
-        let
-          localSystems = [
-            "x86_64-linux" # "aarch64-linux"
-            "aarch64-darwin"
-          ];
-          crossSystem = "aarch64-linux";
-        in
-        nixpkgs.lib.genAttrs localSystems (
-          localSystem:
-          f (import nixpkgs { inherit localSystem; }) (
-            import nixpkgs {
-              inherit localSystem;
-              inherit crossSystem;
-            }
-          )
-        );
+      forSystems = nixpkgs.lib.genAttrs [
+        "x86_64-linux" # "aarch64-linux"
+        "aarch64-darwin"
+      ];
     in
     {
-      packages = systems (
-        pkgs: crossPkgs: rec {
-          smart-piano = pkgs.callPackage ./ui.nix {
-            inherit self pkgs;
-            inherit (pkgs) glfw;
-            engine = engine.packages.${pkgs.stdenv.hostPlatform.system}.default;
-            stdenv = pkgs.clangStdenv;
-          };
-          cross-smart-piano = crossPkgs.callPackage ./ui.nix {
-            inherit self;
-            inherit (crossPkgs) glfw;
-            engine =
-              engine.packages.${pkgs.stdenv.hostPlatform.system}."${crossPkgs.stdenv.hostPlatform.system}-default";
-            pkgs = crossPkgs;
-            stdenv = crossPkgs.clangStdenv;
-          };
-          default = smart-piano;
-          cross = cross-smart-piano;
+      packages = forSystems (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+          mkUi =
+            p:
+            p.callPackage ./ui.nix {
+              inherit self;
+              inherit (p) glfw;
+              engine =
+                engine.packages.${pkgs.stdenv.hostPlatform.system}.${
+                  if pkgs.stdenv.hostPlatform.system == p.stdenv.hostPlatform.system then
+                    "default"
+                  else
+                    "${p.stdenv.hostPlatform.system}-default"
+                };
+              stdenv = p.clangStdenv;
+            };
+        in
+        {
+          default = mkUi pkgs;
+          smart-piano = mkUi pkgs;
+        }
+        // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
+          aarch64-linux-default = mkUi pkgs.pkgsCross.aarch64-multiplatform;
+          aarch64-linux-smart-piano = mkUi pkgs.pkgsCross.aarch64-multiplatform;
         }
       );
-      devShells = systems (
-        pkgs: crossPkgs: {
+      devShells = forSystems (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+          defaultPkg = self.packages.${system}.default;
+        in
+        {
           default =
             pkgs.mkShell.override
               {
                 stdenv = pkgs.clangStdenv; # Clang instead of GCC
               }
-              rec {
+              {
                 packages =
                   with pkgs;
                   [
@@ -78,18 +77,14 @@
                     socat # Serial terminal for manual testing
                     valgrind # Debugging and profiling
                   ];
-
-                nativeBuildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.smart-piano.nativeBuildInputs;
-                buildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.smart-piano.buildInputs;
-                # Export compile commands JSON for LSP and other tools
+                inputsFrom = [ defaultPkg ];
                 shellHook = ''
-                  export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath buildInputs}:$LD_LIBRARY_PATH"
                   # export XDG_SESSION_TYPE=wayland
                   # export SDL_VIDEODRIVER=wayland 
                   # export _JAVA_AWT_WM_NONREPARENTING=1
-                  mkdir --verbose build
-                  cd build
-                  cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+                  export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath defaultPkg.buildInputs}:$LD_LIBRARY_PATH"
+                  cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Debug \
+                    -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
                 '';
               };
         }

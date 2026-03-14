@@ -5,13 +5,16 @@
   engine,
   glfw,
   llvm,
+  lib,
+  libdecor,
   libGL,
   ninja,
   pkg-config,
-  pkgs,
   raylib,
   self,
   stdenv,
+  wayland,
+  xorg,
 }:
 stdenv.mkDerivation {
   pname = "ui";
@@ -31,14 +34,14 @@ stdenv.mkDerivation {
     libGL # GPU library
     raylib # Graphics library
   ]
-  ++ pkgs.lib.optionals stdenv.isLinux [
-    pkgs.wayland
-    pkgs.libdecor
-    pkgs.xorg.libX11
-    pkgs.xorg.libXcursor
-    pkgs.xorg.libXinerama
-    pkgs.xorg.libXi
-    pkgs.xorg.libXrandr
+  ++ lib.optionals stdenv.isLinux [
+    wayland
+    libdecor
+    xorg.libX11
+    xorg.libXcursor
+    xorg.libXinerama
+    xorg.libXi
+    xorg.libXrandr
   ];
   preConfigure = ''
     cmakeFlagsArray+=("-DENGINE_PATH=${engine}")
