@@ -53,28 +53,33 @@
           smart-piano = self.packages.${system}.default;
         in
         {
-          default = pkgs.mkShell {
-            inputsFrom = [ smart-piano ];
-            packages = with pkgs; [
-              clang-tools # Clang CLIs, including LSP
-              clang-uml # UML diagram generator
-              cmake-format # CMake formatter
-              cmake-language-server # Cmake LSP
-              cmake-lint
-              # cppcheck # C++ Static analysis
-              doxygen # Documentation generator
-              # fluidsynth # JACK Synthesizer
-              lldb # Clang debug adapter
-              # qsynth # FluidSynth GUI
-              # socat # Serial terminal for manual testing
-              # valgrind # Debugging and profiling
-            ];
-            shellHook = ''
-              export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath smart-piano.buildInputs}:$LD_LIBRARY_PATH"
-              cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Debug \
-                -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-            '';
-          };
+          default =
+            pkgs.mkShell.override
+              {
+                stdenv = pkgs.clangStdenv; # Clang instead of GCC
+              }
+              {
+                packages = with pkgs; [
+                  clang-tools # Clang CLIs, including LSP
+                  clang-uml # UML diagram generator
+                  cmake-format # CMake formatter
+                  cmake-language-server # Cmake LSP
+                  cmake-lint
+                  # cppcheck # C++ Static analysis
+                  doxygen # Documentation generator
+                  # fluidsynth # JACK Synthesizer
+                  lldb # Clang debug adapter
+                  # qsynth # FluidSynth GUI
+                  # socat # Serial terminal for manual testing
+                  # valgrind # Debugging and profiling
+                ];
+                inputsFrom = [ smart-piano ];
+                shellHook = ''
+                  export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath smart-piano.buildInputs}:$LD_LIBRARY_PATH"
+                  cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Debug \
+                    -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+                '';
+              };
         }
       );
       checks = forAllSystems (system: self.packages.${system});
