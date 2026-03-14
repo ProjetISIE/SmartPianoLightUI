@@ -23,9 +23,16 @@ class Logger {
      * @return Horodatage "HH:MM:SS.mmm"
      */
     static std::string time() {
-        return std::format(
-            "{:%T}", std::chrono::zoned_time{std::chrono::current_zone(),
-                                             std::chrono::system_clock::now()});
+        try {
+            return std::format(
+                "{:%T}",
+                std::chrono::zoned_time{std::chrono::current_zone(),
+                                        std::chrono::system_clock::now()});
+        } catch (...) {
+            auto secs = std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::system_clock::now().time_since_epoch());
+            return std::format("{}", secs);
+        }
     }
 
     /**
@@ -33,9 +40,14 @@ class Logger {
      * @return Horodatage "YYYY-MM-DD"
      */
     static std::string date() {
-        return std::format(
-            "{:%F}", std::chrono::zoned_time{std::chrono::current_zone(),
-                                             std::chrono::system_clock::now()});
+        try {
+            return std::format(
+                "{:%F}",
+                std::chrono::zoned_time{std::chrono::current_zone(),
+                                        std::chrono::system_clock::now()});
+        } catch (...) {
+            return "1970-01-01";
+        }
     }
 
     /**

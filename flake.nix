@@ -39,7 +39,10 @@
           smart-piano = makeSmartPiano pkgs;
         }
         // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          smart-piano-aarch64 = makeSmartPiano pkgs.pkgsCross.aarch64-multiplatform;
+          smart-piano-aarch64 = (pkgs.pkgsCross.aarch64-multiplatform).callPackage ./ui.nix {
+            stdenv = (pkgs.pkgsCross.aarch64-multiplatform).clangStdenv;
+            engine = engine.packages.${system}.smart-piano-engine-aarch64 or engine.packages.${system}.default;
+          };
         }
       );
       devShells = forAllSystems (
