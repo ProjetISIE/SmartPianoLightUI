@@ -68,6 +68,7 @@
                     clang-tools # Clang CLIs, including LSP
                     cmake-format # CMake formatter
                     cmake-language-server # Cmake LSP
+                    doctest # Testing framework (for local -DBUILD_TESTING=ON builds)
                     doxygen # Documentation generator
                     lldb # Clang debug adapter
                   ]
