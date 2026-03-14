@@ -42,7 +42,8 @@
           cross-smart-piano = crossPkgs.callPackage ./ui.nix {
             inherit self;
             inherit (crossPkgs) glfw;
-            engine = engine.packages.${crossPkgs.stdenv.hostPlatform.system}.default;
+            engine =
+              engine.packages.${pkgs.stdenv.hostPlatform.system}."${crossPkgs.stdenv.hostPlatform.system}-default";
             pkgs = crossPkgs;
             stdenv = crossPkgs.clangStdenv;
           };

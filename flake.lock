@@ -5,11 +5,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1773491544,
-        "narHash": "sha256-DaE+aO1+e3DPfQrlAmugNb11rjJEj9pE0us9jF4of7k=",
+        "lastModified": 1773491938,
+        "narHash": "sha256-qtqSsbXHWEOWS3uwRG+JTkeLoX08D0qX1V11sQC/UCA=",
         "owner": "ProjetISIE",
         "repo": "SmartPianoEngine",
-        "rev": "29c3ae0a60528b0b97dc6949213d550722359b13",
+        "rev": "63fda6a74dc5b4fe6418c46860f78561145d1d05",
         "type": "github"
       },
       "original": {
