@@ -1,7 +1,6 @@
 {
   cmake,
   clang,
-  doctest,
   engine,
   glfw,
   llvm,
@@ -32,7 +31,6 @@ stdenv.mkDerivation {
     pkg-config # Build tool
   ];
   buildInputs = [
-    doctest # Testing framework
     engine # SmartPianoEngine
     glfw # Raylib dependency
     libGL # GPU library
