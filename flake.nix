@@ -15,8 +15,7 @@
         f:
         let
           localSystems = [
-            "aarch64-linux"
-            "x86_64-linux"
+            "x86_64-linux" # "aarch64-linux"
             "aarch64-darwin"
           ];
           crossSystem = "aarch64-linux";
@@ -59,19 +58,26 @@
                 stdenv = pkgs.clangStdenv; # Clang instead of GCC
               }
               rec {
-                packages = with pkgs; [
-                  clang-tools # Clang CLIs, including LSP
-                  clang-uml # UML diagram generator
-                  cmake-format # CMake formatter
-                  cmake-language-server # Cmake LSP
-                  # cppcheck # C++ Static analysis
-                  doxygen # Documentation generator
-                  # fluidsynth # JACK Synthesizer
-                  lldb # Clang debug adapter
-                  # qsynth # FluidSynth GUI
-                  # socat # Serial terminal for manual testing
-                  # valgrind # Debugging and profiling
-                ];
+                packages =
+                  with pkgs;
+                  [
+                    bashInteractive
+                    clang-tools # Clang CLIs, including LSP
+                    cmake-format # CMake formatter
+                    cmake-language-server # Cmake LSP
+                    doxygen # Documentation generator
+                    lldb # Clang debug adapter
+                  ]
+                  ++ lib.optionals stdenv.isLinux [
+                    alsa-utils # aconnect…
+                    clang-uml # UML diagram generator
+                    cppcheck # C++ Static analysis
+                    fluidsynth # JACK Synthesizer
+                    qsynth # FluidSynth GUI
+                    socat # Serial terminal for manual testing
+                    valgrind # Debugging and profiling
+                  ];
+
                 nativeBuildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.smart-piano.nativeBuildInputs;
                 buildInputs = self.packages.${pkgs.stdenv.hostPlatform.system}.smart-piano.buildInputs;
                 # Export compile commands JSON for LSP and other tools

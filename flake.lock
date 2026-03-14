@@ -5,11 +5,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1773490182,
-        "narHash": "sha256-Vl6+OYR86Jwg8///ow2bBeAYXLisjaa8UBAZ2pP+fBA=",
+        "lastModified": 1773491299,
+        "narHash": "sha256-0Ih3GHwEfaOLdZdK5qZT15rO7dGQZCm7d7Uig+W13js=",
         "owner": "ProjetISIE",
         "repo": "SmartPianoEngine",
-        "rev": "bdde7d0765764520d6a93004685075c97d7dc8ac",
+        "rev": "ace91a067f30150e81ebf6fbd8545d677677e80c",
         "type": "github"
       },
       "original": {
@@ -36,11 +36,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1773282481,
-        "narHash": "sha256-b/GV2ysM8mKHhinse2wz+uP37epUrSE+sAKXy/xvBY4=",
+        "lastModified": 1773389992,
+        "narHash": "sha256-wvfdLLWJ2I9oEpDd9PfMA8osfIZicoQ5MT1jIwNs9Tk=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "fe416aaedd397cacb33a610b33d60ff2b431b127",
+        "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
         "type": "github"
       },
       "original": {
