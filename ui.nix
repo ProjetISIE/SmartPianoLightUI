@@ -17,7 +17,6 @@ stdenv.mkDerivation {
   pname = "ui";
   version = "0.0.0";
   src = self;
-  # doCheck = true; # Enable tests TODO
   nativeBuildInputs = [
     clang # C/C++ compiler
     cmake # Modern build tool
@@ -41,11 +40,9 @@ stdenv.mkDerivation {
     pkgs.xorg.libXi
     pkgs.xorg.libXrandr
   ];
-
   preConfigure = ''
     cmakeFlagsArray+=("-DENGINE_PATH=${engine}")
   '';
-
   installPhase = ''
     mkdir --parents --verbose $out/bin
     cp --verbose src/main $out/bin/ui
