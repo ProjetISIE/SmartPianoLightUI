@@ -1,25 +1,25 @@
 {
+  lib,
+  stdenv,
   cmake,
-  clang,
-  doctest,
-  engine,
-  glfw,
-  llvm,
-  libGL,
   ninja,
   pkg-config,
-  pkgs,
   raylib,
-  self,
-  stdenv,
+  glfw,
+  libGL,
+  doctest,
+  engine,
+  llvm,
+  wayland,
+  libdecor,
+  xorg,
 }:
-stdenv.mkDerivation {
-  pname = "ui";
+stdenv.mkDerivation rec {
+  pname = "smart-piano-ui";
   version = "0.0.0";
-  src = self;
-  # doCheck = true; # Enable tests TODO
+  src = lib.cleanSource ./.;
   nativeBuildInputs = [
-    clang # C/C++ compiler
+    # clang # C/C++ compiler
     cmake # Modern build tool
     doctest # Testing framework
     llvm # For llvm-cov
@@ -32,22 +32,27 @@ stdenv.mkDerivation {
     libGL # GPU library
     raylib # Graphics library
   ]
-  ++ pkgs.lib.optionals stdenv.isLinux [
-    pkgs.wayland
-    pkgs.libdecor
-    pkgs.xorg.libX11
-    pkgs.xorg.libXcursor
-    pkgs.xorg.libXinerama
-    pkgs.xorg.libXi
-    pkgs.xorg.libXrandr
+  ++ lib.optionals stdenv.isLinux [
+    wayland
+    libdecor
+    xorg.libX11
+    xorg.libXcursor
+    xorg.libXinerama
+    xorg.libXi
+    xorg.libXrandr
   ];
-
   preConfigure = ''
     cmakeFlagsArray+=("-DENGINE_PATH=${engine}")
   '';
-
   installPhase = ''
+    runHook preInstall
     mkdir --parents --verbose $out/bin
-    cp --verbose src/main $out/bin/ui
+    cp --verbose src/main $out/bin/${pname}
+    runHook postInstall
   '';
+  meta = with lib; {
+    description = "Smart Piano User Interface";
+    license = licenses.gpl3Plus;
+    platforms = platforms.all;
+  };
 }

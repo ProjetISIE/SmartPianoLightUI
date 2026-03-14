@@ -1,5 +1,4 @@
 builds:
 - include:
+  - packages.*.*
   - devShells.*.*
-  - crossPackages.x86_64-linux.*
-
