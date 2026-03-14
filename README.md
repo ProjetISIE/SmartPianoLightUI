@@ -2,33 +2,32 @@
 lang: fr
 ---
 
+# Smart Piano User Interface
+
 <!--toc:start-->
 
-- [Smart Piano User Interface](#smart-piano-user-interface)
-  - [Modes de Jeu](#modes-de-jeu)
-    - [Gammes Supportées](#gammes-supportées)
-    - [Modes Supportés](#modes-supportés)
-  - [Matériel](#matériel)
-  - [Dépannage et Résolution des Problèmes](#dépannage-et-résolution-des-problèmes)
-  - [Outillage](#outillage)
-  - [Compilation & Exécution](#compilation-exécution)
-    - [Test Manuel](#test-manuel)
-    - [Tests Automatiques](#tests-automatiques)
-  - [Conventions de Code](#conventions-de-code)
-    - [Documentation Doxygen](#documentation-doxygen)
-    - [Nommage des Symboles (casse, tirets)](#nommage-des-symboles-casse-tirets)
-    - [Formatage du Code (sauts de ligne, espaces)](#formatage-du-code-sauts-de-ligne-espaces)
-    - [Autres](#autres)
-  - [Journalisation](#journalisation)
-  - [Auteurs & Licence](#auteurs-licence)
-  - [Contribution](#contribution)
-    - [Ajout d’un Transport](#ajout-dun-transport)
-  - [Architecture](#architecture)
-    - [Utilitaires](#utilitaires)
+- [Modes de Jeu](#modes-de-jeu)
+  - [Gammes Supportées](#gammes-supportées)
+  - [Modes Supportés](#modes-supportés)
+- [Matériel](#matériel)
+- [Dépannage et Résolution des Problèmes](#dépannage-et-résolution-des-problèmes)
+- [Outillage](#outillage)
+- [Compilation & Exécution](#compilation-exécution)
+  - [Test Manuel](#test-manuel)
+  - [Tests Automatiques](#tests-automatiques)
+- [Conventions de Code](#conventions-de-code)
+  - [Documentation Doxygen](#documentation-doxygen)
+  - [Nommage des Symboles (casse, tirets)](#nommage-des-symboles-casse-tirets)
+  - [Formatage du Code (sauts de ligne, espaces)](#formatage-du-code-sauts-de-ligne-espaces)
+  - [Autres](#autres)
+- [Journalisation](#journalisation)
+- [Auteurs & Licence](#auteurs-licence)
+- [Contribution](#contribution)
+  - [Ajout d’un Transport](#ajout-dun-transport)
+- [Architecture](#architecture)
+  - [Utilitaires](#utilitaires)
 
 <!--toc:end-->
-
-# Smart Piano User Interface
 
 Smart Piano est un système aidant à progresser au piano en s'entrainant à en
 jouer d’une manière optimisant l’apprentissage grâce à des exercices
