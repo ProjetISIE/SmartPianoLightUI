@@ -13,7 +13,7 @@ find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 add_compile_options(
-  -Wall -Wextra -Wpedantic -Wshadow
+  -Wall -Wextra # -Wpedantic -Wshadow
   # -Wconversion -Werror
 )
 
