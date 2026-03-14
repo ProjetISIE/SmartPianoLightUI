@@ -31,11 +31,11 @@ stdenv.mkDerivation rec {
   buildInputs = [
     engine # SmartPianoEngine
     glfw # Raylib dependency
-    libGL # GPU library
     raylib # Graphics library
   ]
   ++ lib.optionals stdenv.isLinux [
     wayland
+    libGL # GPU library (null in nixpkgs on Darwin)
     libdecor
     libx11
     libxcursor
@@ -44,7 +44,7 @@ stdenv.mkDerivation rec {
     libxrandr
   ];
   preConfigure = ''
-    cmakeFlagsArray+=("-DENGINE_PATH=${engine}")
+    cmakeFlagsArray+=("-DENGINE_PATH=${engine}" "-DCOVERAGE=OFF")
   '';
   installPhase = ''
     runHook preInstall
