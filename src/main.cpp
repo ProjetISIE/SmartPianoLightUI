@@ -26,7 +26,7 @@ int main() {
     Color orEclatant = (Color){255, 215, 0, 255};
     Color rougeErreur = (Color){230, 41, 55, 255};
 
-    std::vector<UserProfile> profiles = {{"JISELE", 250, SKYBLUE}};
+    std::vector<UserProfile> profiles = {{"Utilisateur", 250, SKYBLUE}};
     int currentUserIndex = 0;
 
     // Saisie de nom
