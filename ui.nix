@@ -21,8 +21,7 @@
 }:
 stdenv.mkDerivation rec {
   pname = "smart-piano-ui";
-  version = "0.0.0";
-  src = self;
+  version = "0.1.0";
   src = lib.cleanSource ./.;
   nativeBuildInputs = [
     # clang # C/C++ compiler
