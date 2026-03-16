@@ -765,7 +765,6 @@ int main(int argc, char* argv[]) {
     float reconnectTimer{0.f};
 
     auto comm = std::make_unique<Communication>();
-    if (comm->connect()) currentState = GameState::CONNECTED;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
     InitWindow(900, 680, "Smart Piano Trainer");
