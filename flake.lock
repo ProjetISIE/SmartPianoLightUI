@@ -1,0 +1,62 @@
+{
+  "nodes": {
+    "engine": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1773507523,
+        "narHash": "sha256-SbsDkUMCx4NYqd9tha0iwNOqvhktppVGxQ9tGmDtdyc=",
+        "owner": "ProjetISIE",
+        "repo": "SmartPianoEngine",
+        "rev": "d9dcf3ae3e00526e14fb5d3cec005a635c7ac8a9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ProjetISIE",
+        "repo": "SmartPianoEngine",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1764667669,
+        "narHash": "sha256-7WUCZfmqLAssbDqwg9cUDAXrSoXN79eEEq17qhTNM/Y=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "418468ac9527e799809c900eda37cbff999199b6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1773579282,
+        "narHash": "sha256-LWvZj9Bvm1EuoO6zbX4yjZebwnZNfeTbmCJGS7RGQ3Y=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "5a88de74db0e948139be4b46f9a94d64aa11391c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "engine": "engine",
+        "nixpkgs": "nixpkgs_2"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
