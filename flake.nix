@@ -28,7 +28,6 @@
           mkUi =
             p:
             p.callPackage ./ui.nix {
-              inherit self;
               inherit (p) glfw;
               engine =
                 engine.packages.${pkgs.stdenv.hostPlatform.system}.${

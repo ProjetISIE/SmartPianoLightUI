@@ -17,7 +17,6 @@
   raylib,
   stdenv,
   wayland,
-  xorg,
 }:
 stdenv.mkDerivation rec {
   pname = "smart-piano-ui";
