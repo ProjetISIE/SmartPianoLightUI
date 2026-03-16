@@ -18,7 +18,8 @@
 static constexpr int SCREEN_W{1024};
 static constexpr int SCREEN_H{768};
 static constexpr float CONN_RETRY_INTERVAL{2.0f}; ///< Secondes entre tentatives
-static constexpr float RESULT_DISPLAY_DURATION{2.5f}; ///< Durée affichage résultat
+static constexpr float RESULT_DISPLAY_DURATION{
+    2.5f}; ///< Durée affichage résultat
 static constexpr int MAX_PROFILES{4};
 
 // ---------------------------------------------------------------------------
@@ -26,12 +27,7 @@ static constexpr int MAX_PROFILES{4};
 // ---------------------------------------------------------------------------
 
 /// États de l'application
-typedef enum {
-    PROFILE_SELECT,
-    MENU,
-    PLAY,
-    GAME_OVER
-} AppState;
+typedef enum { PROFILE_SELECT, MENU, PLAY, GAME_OVER } AppState;
 
 /// États du protocole (côté client)
 typedef enum {
@@ -152,7 +148,7 @@ static std::string noteLetterToFrench(char c) {
     case 'g': return "SOL";
     case 'a': return "LA";
     case 'b': return "SI";
-    default:  return std::string(1, c);
+    default: return std::string(1, c);
     }
 }
 
@@ -194,9 +190,9 @@ static NoteKey resolveKey(const std::string& note) {
 
     // Indice de la touche blanche
     static constexpr int WHITE_MAP[7] = {
-        // Indexé par (letter - 'a') : a=5(LA), b=6(SI), c=0(DO), d=1(RE), e=2(MI), f=3(FA), g=4(SOL)
-        5, 6, 0, 1, 2, 3, 4
-    };
+        // Indexé par (letter - 'a') : a=5(LA), b=6(SI), c=0(DO), d=1(RE),
+        // e=2(MI), f=3(FA), g=4(SOL)
+        5, 6, 0, 1, 2, 3, 4};
     if (letter < 'a' || letter > 'g') return {};
     int whiteIdx = WHITE_MAP[static_cast<int>(letter - 'a')];
 
@@ -277,12 +273,12 @@ int main(int argc, char* argv[]) {
     SetTargetFPS(60);
 
     // --- Couleurs
-    const Color vertFonce    = {20, 40, 20, 255};
+    const Color vertFonce = {20, 40, 20, 255};
     const Color vertEclatant = {100, 255, 100, 255};
-    const Color orEclatant   = {255, 215, 0, 255};
-    const Color rougeErreur  = {230, 41, 55, 255};
-    const Color bleuInfo     = {100, 180, 255, 255};
-    const Color orangeNote   = {255, 140, 0, 255};
+    const Color orEclatant = {255, 215, 0, 255};
+    const Color rougeErreur = {230, 41, 55, 255};
+    const Color bleuInfo = {100, 180, 255, 255};
+    const Color orangeNote = {255, 140, 0, 255};
 
     // --- Profils utilisateurs
     std::vector<UserProfile> profiles{{"Utilisateur", 0, SKYBLUE}};
@@ -297,8 +293,8 @@ int main(int argc, char* argv[]) {
 
     // --- Sélection de jeu
     ScaleChoice selectedScale = SCALE_C;
-    ModeChoice  selectedMode  = MODE_MAJ;
-    GameType    selectedGame  = GAME_NOTE;
+    ModeChoice selectedMode = MODE_MAJ;
+    GameType selectedGame = GAME_NOTE;
 
     // --- Score et session
     int scoreActuel = 0;
@@ -314,12 +310,12 @@ int main(int argc, char* argv[]) {
     const char* consolations[] = {"COURAGE !", "CONTINUE !", "PRESQUE !",
                                   "RYTHME !"};
     const char* feedbackMsg = "";
-    Color       feedbackColor = WHITE;
-    float       feedbackAlpha = 0.0f;
+    Color feedbackColor = WHITE;
+    float feedbackAlpha = 0.0f;
 
     // --- Message d'erreur moteur
     std::string errorMsg;
-    float       errorTimer = 0.0f;
+    float errorTimer = 0.0f;
 
     // --- État du protocole
     EngineState engState = ENG_DISCONNECTED;
@@ -332,13 +328,13 @@ int main(int argc, char* argv[]) {
     const int blackKeyIndices[] = {0, 1, 3, 4, 5};
 
     // --- Boutons UI
-    const Rectangle btnPause  = {(float)SCREEN_W - 85.0f, 25.0f, 60.0f, 60.0f};
-    const Rectangle btnMenu   = {25.0f, 25.0f, 120.0f, 45.0f};
-    const Rectangle btnReady  = {160.0f, 25.0f, 160.0f, 45.0f};
+    const Rectangle btnPause = {(float)SCREEN_W - 85.0f, 25.0f, 60.0f, 60.0f};
+    const Rectangle btnMenu = {25.0f, 25.0f, 120.0f, 45.0f};
+    const Rectangle btnReady = {160.0f, 25.0f, 160.0f, 45.0f};
     const Rectangle btnResume = {(float)SCREEN_W / 2.0f - 150.0f,
                                  (float)SCREEN_H / 2.0f - 50.0f, 300.0f, 60.0f};
-    const Rectangle btnQuit   = {(float)SCREEN_W / 2.0f - 150.0f,
-                                 (float)SCREEN_H / 2.0f + 30.0f, 300.0f, 60.0f};
+    const Rectangle btnQuit = {(float)SCREEN_W / 2.0f - 150.0f,
+                               (float)SCREEN_H / 2.0f + 30.0f, 300.0f, 60.0f};
 
     // --- Timer pour le timeout de couverture
     float timeoutTimer = 0.0f;
@@ -388,29 +384,35 @@ int main(int argc, char* argv[]) {
                     } else {
                         std::string code = msg.getField("code");
                         std::string text = msg.getField("message");
-                        errorMsg = std::format("Config invalide ({}): {}", code, text);
+                        errorMsg =
+                            std::format("Config invalide ({}): {}", code, text);
                         errorTimer = 5.0f;
                         appState = MENU;
                         Logger::err("[Main] ACK erreur: {} - {}", code, text);
                     }
                 } else if (type == "note") {
                     std::string noteName = msg.getField("note");
-                    currentChallenge.id = msg.hasField("id") ? std::stoi(msg.getField("id")) : 0;
+                    currentChallenge.id =
+                        msg.hasField("id") ? std::stoi(msg.getField("id")) : 0;
                     currentChallenge.displayText = noteDisplayLabel(noteName);
                     currentChallenge.expectedNotes = {noteName};
                     currentChallenge.isChord = false;
                     engState = ENG_PLAYING;
                     Logger::log("[Main] Défi note: {}", noteName);
                 } else if (type == "chord") {
-                    currentChallenge.id = msg.hasField("id") ? std::stoi(msg.getField("id")) : 0;
+                    currentChallenge.id =
+                        msg.hasField("id") ? std::stoi(msg.getField("id")) : 0;
                     currentChallenge.displayText = msg.getField("name");
-                    currentChallenge.expectedNotes = splitNotes(msg.getField("notes"));
+                    currentChallenge.expectedNotes =
+                        splitNotes(msg.getField("notes"));
                     currentChallenge.isChord = true;
                     engState = ENG_PLAYING;
-                    Logger::log("[Main] Défi accord: {}", currentChallenge.displayText);
+                    Logger::log("[Main] Défi accord: {}",
+                                currentChallenge.displayText);
                 } else if (type == "result") {
                     lastResult.correct = splitNotes(msg.getField("correct"));
-                    lastResult.incorrect = splitNotes(msg.getField("incorrect"));
+                    lastResult.incorrect =
+                        splitNotes(msg.getField("incorrect"));
                     lastResult.displayTimer = RESULT_DISPLAY_DURATION;
                     lastResult.active = true;
 
@@ -435,17 +437,23 @@ int main(int argc, char* argv[]) {
                         feedbackAlpha = 1.0f;
                     }
                     engState = ENG_PLAYED;
-                    Logger::log("[Main] Résultat reçu (correct: {}, incorrect: {})",
-                                msg.getField("correct"), msg.getField("incorrect"));
+                    Logger::log(
+                        "[Main] Résultat reçu (correct: {}, incorrect: {})",
+                        msg.getField("correct"), msg.getField("incorrect"));
                 } else if (type == "over") {
-                    gameStats.perfect  = msg.hasField("perfect")
-                                         ? std::stoi(msg.getField("perfect")) : 0;
-                    gameStats.partial  = msg.hasField("partial")
-                                         ? std::stoi(msg.getField("partial")) : 0;
-                    gameStats.total    = msg.hasField("total")
-                                         ? std::stoi(msg.getField("total")) : 0;
-                    gameStats.duration = msg.hasField("duration")
-                                         ? std::stoll(msg.getField("duration")) : 0LL;
+                    gameStats.perfect = msg.hasField("perfect")
+                                            ? std::stoi(msg.getField("perfect"))
+                                            : 0;
+                    gameStats.partial = msg.hasField("partial")
+                                            ? std::stoi(msg.getField("partial"))
+                                            : 0;
+                    gameStats.total = msg.hasField("total")
+                                          ? std::stoi(msg.getField("total"))
+                                          : 0;
+                    gameStats.duration =
+                        msg.hasField("duration")
+                            ? std::stoll(msg.getField("duration"))
+                            : 0LL;
                     // Mise à jour record
                     if (scoreActuel > profiles[currentUserIdx].topScore)
                         profiles[currentUserIdx].topScore = scoreActuel;
@@ -456,7 +464,8 @@ int main(int argc, char* argv[]) {
                 } else if (type == "error") {
                     std::string code = msg.getField("code");
                     std::string text = msg.getField("message");
-                    errorMsg = std::format("Erreur moteur ({}): {}", code, text);
+                    errorMsg =
+                        std::format("Erreur moteur ({}): {}", code, text);
                     errorTimer = 5.0f;
                     Logger::err("[Main] Erreur moteur: {} - {}", code, text);
                     // Erreur interne → retour au menu
@@ -516,7 +525,8 @@ int main(int argc, char* argv[]) {
                 }
             } else if (clicked) {
                 for (int i = 0; i < (int)profiles.size(); i++) {
-                    Rectangle r    = {(float)(100 + i * 220), 300.0f, 180.0f, 220.0f};
+                    Rectangle r = {(float)(100 + i * 220), 300.0f, 180.0f,
+                                   220.0f};
                     Rectangle rDel = {r.x + 150.0f, r.y + 5.0f, 25.0f, 25.0f};
                     if (CheckCollisionPointRec(mouse, rDel)) {
                         profiles.erase(profiles.begin() + i);
@@ -530,8 +540,9 @@ int main(int argc, char* argv[]) {
                     }
                 }
                 if ((int)profiles.size() < MAX_PROFILES) {
-                    Rectangle btnPlus = {(float)(100 + (int)profiles.size() * 220),
-                                         300, 180, 220};
+                    Rectangle btnPlus = {
+                        (float)(100 + (int)profiles.size() * 220), 300, 180,
+                        220};
                     if (!isNamingProfile &&
                         CheckCollisionPointRec(mouse, btnPlus))
                         isNamingProfile = true;
@@ -544,16 +555,21 @@ int main(int argc, char* argv[]) {
             if (clicked) {
                 // Sélection gamme
                 for (int i = 0; i < 7; i++) {
-                    Rectangle r = {(float)(SCREEN_W / 2 - 245 + i * 70), 560.0f, 60.0f, 40.0f};
+                    Rectangle r = {(float)(SCREEN_W / 2 - 245 + i * 70), 560.0f,
+                                   60.0f, 40.0f};
                     if (CheckCollisionPointRec(mouse, r))
                         selectedScale = static_cast<ScaleChoice>(i);
                 }
                 // Sélection mode
                 {
-                    Rectangle rMaj = {(float)SCREEN_W / 2.0f - 75.0f, 620.0f, 70.0f, 40.0f};
-                    Rectangle rMin = {(float)SCREEN_W / 2.0f + 5.0f,  620.0f, 70.0f, 40.0f};
-                    if (CheckCollisionPointRec(mouse, rMaj)) selectedMode = MODE_MAJ;
-                    if (CheckCollisionPointRec(mouse, rMin)) selectedMode = MODE_MIN;
+                    Rectangle rMaj = {(float)SCREEN_W / 2.0f - 75.0f, 620.0f,
+                                      70.0f, 40.0f};
+                    Rectangle rMin = {(float)SCREEN_W / 2.0f + 5.0f, 620.0f,
+                                      70.0f, 40.0f};
+                    if (CheckCollisionPointRec(mouse, rMaj))
+                        selectedMode = MODE_MAJ;
+                    if (CheckCollisionPointRec(mouse, rMin))
+                        selectedMode = MODE_MIN;
                 }
                 // Boutons de jeu
                 auto startGame = [&](GameType gt) {
@@ -569,19 +585,25 @@ int main(int argc, char* argv[]) {
                     feedbackAlpha = 0.0f;
                     appState = PLAY;
 
-                    const char* scaleStr[] = {"c","d","e","f","g","a","b"};
-                    Message cfg("config",
-                        {{"game", gt == GAME_NOTE ? "note"
-                                : gt == GAME_CHORD ? "chord" : "inversed"},
+                    const char* scaleStr[] = {"c", "d", "e", "f",
+                                              "g", "a", "b"};
+                    Message cfg(
+                        "config",
+                        {{"game", gt == GAME_NOTE    ? "note"
+                                  : gt == GAME_CHORD ? "chord"
+                                                     : "inversed"},
                          {"scale", scaleStr[static_cast<int>(selectedScale)]},
                          {"mode", selectedMode == MODE_MAJ ? "maj" : "min"}});
                     comm.send(cfg);
                     engState = ENG_CONFIGURED;
                 };
-                if (mouse.x > SCREEN_W / 2 - 250 && mouse.x < SCREEN_W / 2 + 250) {
+                if (mouse.x > SCREEN_W / 2 - 250 &&
+                    mouse.x < SCREEN_W / 2 + 250) {
                     if (mouse.y > 250 && mouse.y < 330) startGame(GAME_NOTE);
-                    else if (mouse.y > 350 && mouse.y < 430) startGame(GAME_CHORD);
-                    else if (mouse.y > 450 && mouse.y < 530) startGame(GAME_INVERSED);
+                    else if (mouse.y > 350 && mouse.y < 430)
+                        startGame(GAME_CHORD);
+                    else if (mouse.y > 450 && mouse.y < 530)
+                        startGame(GAME_INVERSED);
                 }
                 if (mouse.y > 680) appState = PROFILE_SELECT;
             }
@@ -590,9 +612,11 @@ int main(int argc, char* argv[]) {
         // --- JEU
         else if (appState == PLAY) {
             if (clicked) {
-                if (CheckCollisionPointRec(mouse, btnPause)) isPaused = !isPaused;
+                if (CheckCollisionPointRec(mouse, btnPause))
+                    isPaused = !isPaused;
                 else if (isPaused) {
-                    if (CheckCollisionPointRec(mouse, btnResume)) isPaused = false;
+                    if (CheckCollisionPointRec(mouse, btnResume))
+                        isPaused = false;
                     if (CheckCollisionPointRec(mouse, btnQuit)) {
                         comm.send(Message("quit"));
                         engState = ENG_CONNECTED;
@@ -664,8 +688,8 @@ int main(int argc, char* argv[]) {
         // --- Indicateur connexion (coin haut gauche, sauf PROFILE_SELECT)
         if (appState != PROFILE_SELECT) {
             Color indColor = (engState == ENG_DISCONNECTED) ? rougeErreur
-                           : (engState == ENG_CONNECTED)    ? orEclatant
-                                                             : vertEclatant;
+                             : (engState == ENG_CONNECTED)  ? orEclatant
+                                                            : vertEclatant;
             DrawCircle(12, 12, 6, indColor);
             if (engState == ENG_DISCONNECTED)
                 DrawText("Connexion…", 24, 5, 14, rougeErreur);
@@ -684,14 +708,15 @@ int main(int argc, char* argv[]) {
         // -------------------------------------------------------------------
         if (appState == PROFILE_SELECT) {
             DrawText("SESSIONS UTILISATEURS",
-                     SCREEN_W / 2 - MeasureText("SESSIONS UTILISATEURS", 30) / 2,
+                     SCREEN_W / 2 -
+                         MeasureText("SESSIONS UTILISATEURS", 30) / 2,
                      100, 30, vertEclatant);
             for (int i = 0; i < (int)profiles.size(); i++) {
-                Rectangle r    = {(float)(100 + i * 220), 300, 180, 220};
+                Rectangle r = {(float)(100 + i * 220), 300, 180, 220};
                 Rectangle rDel = {r.x + 150, r.y + 5, 25, 25};
                 DrawRectangleLinesEx(r, 2, profiles[i].color);
-                DrawText(profiles[i].name.c_str(), (int)r.x + 15, (int)r.y + 100,
-                         20, profiles[i].color);
+                DrawText(profiles[i].name.c_str(), (int)r.x + 15,
+                         (int)r.y + 100, 20, profiles[i].color);
                 DrawText(TextFormat("Record: %i", profiles[i].topScore),
                          (int)r.x + 15, (int)r.y + 140, 15,
                          Fade(profiles[i].color, 0.6f));
@@ -700,29 +725,31 @@ int main(int argc, char* argv[]) {
             }
             if ((int)profiles.size() < MAX_PROFILES && !isNamingProfile) {
                 Rectangle rP = {(float)(100 + (int)profiles.size() * 220), 300,
-                                 180, 220};
+                                180, 220};
                 DrawRectangleLinesEx(rP, 2, Fade(vertEclatant, 0.3f));
                 DrawText("+", (int)rP.x + 75, (int)rP.y + 80, 60,
                          Fade(vertEclatant, 0.3f));
             }
             if (isNamingProfile) {
                 DrawRectangle(0, 0, SCREEN_W, SCREEN_H, Fade(BLACK, 0.8f));
-                DrawText("NOM DU NOUVEAU PROFIL :",
-                         SCREEN_W / 2 - 140, SCREEN_H / 2 - 50, 20, vertEclatant);
+                DrawText("NOM DU NOUVEAU PROFIL :", SCREEN_W / 2 - 140,
+                         SCREEN_H / 2 - 50, 20, vertEclatant);
                 DrawText(inputName,
                          SCREEN_W / 2 - MeasureText(inputName, 40) / 2,
                          SCREEN_H / 2, 40, WHITE);
-                DrawText("ENTREE pour valider",
-                         SCREEN_W / 2 - 80, SCREEN_H / 2 + 60, 15, GRAY);
+                DrawText("ENTREE pour valider", SCREEN_W / 2 - 80,
+                         SCREEN_H / 2 + 60, 15, GRAY);
             }
         }
 
         // -------------------------------------------------------------------
         else if (appState == MENU) {
-            DrawText(TextFormat("JOUEUR: %s", profiles[currentUserIdx].name.c_str()),
-                     40, 40, 25, profiles[currentUserIdx].color);
-            DrawText(TextFormat("RECORD: %i", profiles[currentUserIdx].topScore),
-                     750, 40, 25, vertEclatant);
+            DrawText(
+                TextFormat("JOUEUR: %s", profiles[currentUserIdx].name.c_str()),
+                40, 40, 25, profiles[currentUserIdx].color);
+            DrawText(
+                TextFormat("RECORD: %i", profiles[currentUserIdx].topScore),
+                750, 40, 25, vertEclatant);
             DrawText("SELECTIONNER UN JEU",
                      SCREEN_W / 2 - MeasureText("SELECTIONNER UN JEU", 30) / 2,
                      150, 30, vertEclatant);
@@ -740,14 +767,16 @@ int main(int argc, char* argv[]) {
 
             // Sélection gamme
             DrawText("GAMME :", SCREEN_W / 2 - 245, 540, 18, GRAY);
-            const char* scaleLabels[] = {"C","D","E","F","G","A","B"};
+            const char* scaleLabels[] = {"C", "D", "E", "F", "G", "A", "B"};
             for (int i = 0; i < 7; i++) {
-                Rectangle r = {(float)(SCREEN_W / 2 - 245 + i * 70), 560, 60, 40};
+                Rectangle r = {(float)(SCREEN_W / 2 - 245 + i * 70), 560, 60,
+                               40};
                 bool sel = (selectedScale == static_cast<ScaleChoice>(i));
-                DrawRectangleLinesEx(r, 2,
-                    sel ? vertEclatant : Fade(vertEclatant, 0.35f));
-                if (sel) DrawRectangle((int)r.x + 1, (int)r.y + 1, 58, 38,
-                                       Fade(vertEclatant, 0.15f));
+                DrawRectangleLinesEx(
+                    r, 2, sel ? vertEclatant : Fade(vertEclatant, 0.35f));
+                if (sel)
+                    DrawRectangle((int)r.x + 1, (int)r.y + 1, 58, 38,
+                                  Fade(vertEclatant, 0.15f));
                 DrawText(scaleLabels[i],
                          (int)r.x + 30 - MeasureText(scaleLabels[i], 20) / 2,
                          (int)r.y + 10, 20,
@@ -760,13 +789,14 @@ int main(int argc, char* argv[]) {
                 const char* modes[] = {"MAJ", "MIN"};
                 int offsets[] = {0, 80};
                 for (int i = 0; i < 2; i++) {
-                    Rectangle r = {(float)(SCREEN_W / 2 - 75 + offsets[i]),
-                                   620, 70, 40};
+                    Rectangle r = {(float)(SCREEN_W / 2 - 75 + offsets[i]), 620,
+                                   70, 40};
                     bool sel = ((i == 0) == (selectedMode == MODE_MAJ));
-                    DrawRectangleLinesEx(r, 2,
-                        sel ? vertEclatant : Fade(vertEclatant, 0.35f));
-                    if (sel) DrawRectangle((int)r.x + 1, (int)r.y + 1, 68, 38,
-                                           Fade(vertEclatant, 0.15f));
+                    DrawRectangleLinesEx(
+                        r, 2, sel ? vertEclatant : Fade(vertEclatant, 0.35f));
+                    if (sel)
+                        DrawRectangle((int)r.x + 1, (int)r.y + 1, 68, 38,
+                                      Fade(vertEclatant, 0.15f));
                     DrawText(modes[i],
                              (int)r.x + 35 - MeasureText(modes[i], 20) / 2,
                              (int)r.y + 10, 20,
@@ -775,7 +805,8 @@ int main(int argc, char* argv[]) {
             }
 
             DrawText("< CHANGER D'UTILISATEUR",
-                     SCREEN_W / 2 - MeasureText("< CHANGER D'UTILISATEUR", 15) / 2,
+                     SCREEN_W / 2 -
+                         MeasureText("< CHANGER D'UTILISATEUR", 15) / 2,
                      690, 15, GRAY);
         }
 
@@ -783,23 +814,25 @@ int main(int argc, char* argv[]) {
         else if (appState == PLAY) {
             if (!isPaused) {
                 // Zone de défi
-                const char* chalTxt = currentChallenge.displayText.empty()
-                                      ? "Attente…"
-                                      : currentChallenge.displayText.c_str();
+                const char* chalTxt =
+                    currentChallenge.displayText.empty()
+                        ? "Attente…"
+                        : currentChallenge.displayText.c_str();
                 Rectangle rChal = {(float)SCREEN_W / 2 - 175,
                                    (float)SCREEN_H / 2 - 160, 350, 200};
                 DrawRectangleLinesEx(rChal, 3, vertEclatant);
 
                 // Étiquette type de jeu
                 const char* gameLbl = selectedGame == GAME_NOTE ? "NOTE"
-                                    : selectedGame == GAME_CHORD ? "ACCORD"
-                                                                  : "RENVERSEMENT";
-                DrawText(gameLbl,
-                         (int)rChal.x + 10, (int)rChal.y + 10, 14,
+                                      : selectedGame == GAME_CHORD
+                                          ? "ACCORD"
+                                          : "RENVERSEMENT";
+                DrawText(gameLbl, (int)rChal.x + 10, (int)rChal.y + 10, 14,
                          Fade(vertEclatant, 0.6f));
 
                 // Texte du défi (note ou accord)
-                int txtSize = (int)currentChallenge.displayText.size() > 8 ? 28 : 36;
+                int txtSize =
+                    (int)currentChallenge.displayText.size() > 8 ? 28 : 36;
                 DrawText(chalTxt,
                          SCREEN_W / 2 - MeasureText(chalTxt, txtSize) / 2,
                          SCREEN_H / 2 - 90, txtSize, vertEclatant);
@@ -807,8 +840,8 @@ int main(int argc, char* argv[]) {
                 // État connexion moteur
                 if (engState == ENG_PLAYING) {
                     DrawText("JOUEZ…",
-                             (int)rChal.x + (int)rChal.width / 2
-                             - MeasureText("JOUEZ…", 18) / 2,
+                             (int)rChal.x + (int)rChal.width / 2 -
+                                 MeasureText("JOUEZ…", 18) / 2,
                              (int)rChal.y + (int)rChal.height - 30, 18,
                              Fade(bleuInfo, 0.7f));
                 }
@@ -832,8 +865,8 @@ int main(int argc, char* argv[]) {
             }
 
             // Score
-            DrawText(TextFormat("%i", scoreActuel),
-                     SCREEN_W / 2 - 20, 45, 60, vertEclatant);
+            DrawText(TextFormat("%i", scoreActuel), SCREEN_W / 2 - 20, 45, 60,
+                     vertEclatant);
             DrawText(TextFormat("TOP: %i", profiles[currentUserIdx].topScore),
                      SCREEN_W / 2 - 35, 15, 20,
                      Fade(profiles[currentUserIdx].color, 0.8f));
@@ -851,8 +884,8 @@ int main(int argc, char* argv[]) {
                 Rectangle r = {i * wW, 550, wW - 2, 218};
 
                 // Couleur de base / mise en évidence
-                NoteKey nk = resolveKey(
-                    i < 7 ? std::string(1, "cdefgab"[i]) : "c");
+                NoteKey nk =
+                    resolveKey(i < 7 ? std::string(1, "cdefgab"[i]) : "c");
 
                 bool isExpected = false;
                 bool isCorrectKey = false;
@@ -881,38 +914,43 @@ int main(int argc, char* argv[]) {
                 if (isWrongKey) keyColor = rougeErreur;
                 else if (isCorrectKey) keyColor = vertEclatant;
                 else if (isExpected) keyColor = orangeNote;
-                else if (blanchesAppuyees[i]) keyColor = profiles[currentUserIdx].color;
+                else if (blanchesAppuyees[i])
+                    keyColor = profiles[currentUserIdx].color;
                 else keyColor = BLANK; // transparent → juste le contour
 
-                if (isWrongKey || isCorrectKey || isExpected || blanchesAppuyees[i])
+                if (isWrongKey || isCorrectKey || isExpected ||
+                    blanchesAppuyees[i])
                     DrawRectangleRec(r, keyColor);
                 else
                     DrawRectangleLinesEx(r, 2,
-                        isPaused ? Fade(vertEclatant, 0.2f) : vertEclatant);
+                                         isPaused ? Fade(vertEclatant, 0.2f)
+                                                  : vertEclatant);
 
                 DrawText(nomsNotes[i], (int)r.x + (int)(wW / 2) - 15,
                          (int)r.y + 185, 18,
                          isPaused ? Fade(vertEclatant, 0.2f)
-                         : (isExpected || isCorrectKey || isWrongKey || blanchesAppuyees[i])
-                           ? vertFonce : vertEclatant);
+                         : (isExpected || isCorrectKey || isWrongKey ||
+                            blanchesAppuyees[i])
+                             ? vertFonce
+                             : vertEclatant);
             }
 
             // Touches noires
             float bW = wW * 0.6f;
             for (int i = 0; i < 5; i++) {
-                Rectangle rN = {(blackKeyIndices[i] + 1) * wW - bW / 2, 550,
-                                 bW, 130};
+                Rectangle rN = {(blackKeyIndices[i] + 1) * wW - bW / 2, 550, bW,
+                                130};
 
                 // Résolution de la note associée à cette touche noire
                 // blackKeyIndices[i] correspond à la touche blanche à sa gauche
-                static constexpr char WHITE_LETTERS[7] = {
-                    'c', 'd', 'e', 'f', 'g', 'a', 'b'};
+                static constexpr char WHITE_LETTERS[7] = {'c', 'd', 'e', 'f',
+                                                          'g', 'a', 'b'};
                 std::string sharpNote =
                     std::string(1, WHITE_LETTERS[blackKeyIndices[i]]) + "#";
 
                 bool bkExpected = false;
-                bool bkCorrect  = false;
-                bool bkWrong    = false;
+                bool bkCorrect = false;
+                bool bkWrong = false;
 
                 for (const auto& n : currentChallenge.expectedNotes)
                     if (noteInList(sharpNote, {n})) bkExpected = true;
@@ -923,58 +961,63 @@ int main(int argc, char* argv[]) {
                         if (noteInList(sharpNote, {n})) bkWrong = true;
                 }
 
-                Color bkFill = (bkWrong)    ? rougeErreur
-                             : (bkCorrect)   ? vertEclatant
-                             : (bkExpected)  ? orangeNote
-                             : (noiresAppuyees[i]) ? profiles[currentUserIdx].color
-                             : isPaused ? Fade(vertFonce, 0.5f)
-                                        : (Color){30, 60, 30, 255};
+                Color bkFill = (bkWrong)      ? rougeErreur
+                               : (bkCorrect)  ? vertEclatant
+                               : (bkExpected) ? orangeNote
+                               : (noiresAppuyees[i])
+                                   ? profiles[currentUserIdx].color
+                               : isPaused ? Fade(vertFonce, 0.5f)
+                                          : (Color){30, 60, 30, 255};
                 DrawRectangleRec(rN, bkFill);
-                DrawRectangleLinesEx(rN, 2,
-                    isPaused ? Fade(vertEclatant, 0.2f) : vertEclatant);
+                DrawRectangleLinesEx(
+                    rN, 2, isPaused ? Fade(vertEclatant, 0.2f) : vertEclatant);
             }
 
             // Overlay pause
             if (isPaused) {
                 DrawRectangle(0, 0, SCREEN_W, SCREEN_H, Fade(vertFonce, 0.85f));
-                Rectangle mB = {SCREEN_W / 2 - 200, SCREEN_H / 2 - 150, 400, 300};
+                Rectangle mB = {SCREEN_W / 2 - 200, SCREEN_H / 2 - 150, 400,
+                                300};
                 DrawRectangleRec(mB, vertFonce);
                 DrawRectangleLinesEx(mB, 3, vertEclatant);
-                DrawText("PAUSE", SCREEN_W / 2 - 60, SCREEN_H / 2 - 110,
-                         40, vertEclatant);
+                DrawText("PAUSE", SCREEN_W / 2 - 60, SCREEN_H / 2 - 110, 40,
+                         vertEclatant);
                 DrawRectangleLinesEx(btnResume, 2, vertEclatant);
                 DrawText("REPRENDRE", (int)btnResume.x + 80,
                          (int)btnResume.y + 18, 25, vertEclatant);
                 DrawRectangleLinesEx(btnQuit, 2, rougeErreur);
-                DrawText("QUITTER",  (int)btnQuit.x + 95,
-                         (int)btnQuit.y + 18, 25, rougeErreur);
+                DrawText("QUITTER", (int)btnQuit.x + 95, (int)btnQuit.y + 18,
+                         25, rougeErreur);
             }
         }
 
         // -------------------------------------------------------------------
         else if (appState == GAME_OVER) {
             DrawText("FIN DE PARTIE",
-                     SCREEN_W / 2 - MeasureText("FIN DE PARTIE", 40) / 2,
-                     80, 40, vertEclatant);
+                     SCREEN_W / 2 - MeasureText("FIN DE PARTIE", 40) / 2, 80,
+                     40, vertEclatant);
 
             int cx = SCREEN_W / 2;
             DrawText(TextFormat("SCORE FINAL : %i", scoreActuel),
-                     cx - MeasureText(TextFormat("SCORE FINAL : %i", scoreActuel), 30) / 2,
+                     cx - MeasureText(
+                              TextFormat("SCORE FINAL : %i", scoreActuel), 30) /
+                              2,
                      180, 30, orEclatant);
-            DrawText(TextFormat("Parfaits   : %i / %i",
-                                gameStats.perfect, gameStats.total),
+            DrawText(TextFormat("Parfaits   : %i / %i", gameStats.perfect,
+                                gameStats.total),
                      cx - 130, 260, 22, vertEclatant);
-            DrawText(TextFormat("Partiels   : %i / %i",
-                                gameStats.partial, gameStats.total),
+            DrawText(TextFormat("Partiels   : %i / %i", gameStats.partial,
+                                gameStats.total),
                      cx - 130, 295, 22, vertEclatant);
             long long secs = gameStats.duration / 1000;
-            DrawText(TextFormat("Durée      : %lld s", secs),
-                     cx - 130, 330, 22, vertEclatant);
-            DrawText(TextFormat("Record     : %i", profiles[currentUserIdx].topScore),
+            DrawText(TextFormat("Durée      : %lld s", secs), cx - 130, 330, 22,
+                     vertEclatant);
+            DrawText(TextFormat("Record     : %i",
+                                profiles[currentUserIdx].topScore),
                      cx - 130, 365, 22, orEclatant);
 
             Rectangle btnBack = {(float)cx - 150, (float)SCREEN_H / 2 + 120,
-                                  300, 55};
+                                 300, 55};
             DrawRectangleLinesEx(btnBack, 2, vertEclatant);
             DrawText("RETOUR AU MENU",
                      cx - MeasureText("RETOUR AU MENU", 22) / 2,
@@ -999,4 +1042,3 @@ int main(int argc, char* argv[]) {
     Logger::log("[Main] Arrêté proprement");
     return 0;
 }
-
