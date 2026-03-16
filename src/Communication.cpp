@@ -87,7 +87,7 @@ void Communication::disconnect() {
         this->listenerThread.join();
 }
 
-bool Communication::isConnected() const {
+bool Communication::isConnected() const noexcept {
     return this->sockFd != -1 && this->running;
 }
 

@@ -35,7 +35,7 @@ struct Message {
      * @param key Clé du champ
      * @return Valeur du champ, ou chaîne vide si inexistant
      */
-    std::string getField(const std::string& key) const {
+    [[nodiscard]] std::string getField(const std::string& key) const {
         auto it = this->fields.find(key);
         return (it != this->fields.end()) ? it->second : "";
     }
@@ -45,12 +45,15 @@ struct Message {
      * @param key Clé du champ
      * @return true si le champ existe
      */
-    bool hasField(const std::string& key) const {
+    [[nodiscard]] bool hasField(const std::string& key) const noexcept {
         return this->fields.find(key) != this->fields.end();
     }
 
-    std::string getType() const { return this->type; }
-    std::map<std::string, std::string> getFields() const {
+    [[nodiscard]] const std::string& getType() const noexcept {
+        return this->type;
+    }
+    [[nodiscard]] const std::map<std::string, std::string>&
+    getFields() const noexcept {
         return this->fields;
     }
 };
