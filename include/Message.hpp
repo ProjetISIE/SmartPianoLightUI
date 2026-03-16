@@ -11,8 +11,8 @@
  */
 struct Message {
   private:
-    const std::string type;                          ///< Type du message
-    const std::map<std::string, std::string> fields; ///< Champs du message
+    std::string type;                          ///< Type du message
+    std::map<std::string, std::string> fields; ///< Champs du message
 
   public:
     /**

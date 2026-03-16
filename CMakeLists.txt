@@ -14,6 +14,7 @@ find_package(PkgConfig REQUIRED)
 
 add_compile_options(
   -Wall -Wextra -Wpedantic -Wshadow
+  "-Wno-#warnings"
   # -Wconversion -Werror
 )
 
