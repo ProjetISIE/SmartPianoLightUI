@@ -967,7 +967,7 @@ int main(int argc, char* argv[]) {
                                : (noiresAppuyees[i])
                                    ? profiles[currentUserIdx].color
                                : isPaused ? Fade(vertFonce, 0.5f)
-                                          : (Color){30, 60, 30, 255};
+                                          : Color{30, 60, 30, 255};
                 DrawRectangleRec(rN, bkFill);
                 DrawRectangleLinesEx(
                     rN, 2, isPaused ? Fade(vertEclatant, 0.2f) : vertEclatant);
