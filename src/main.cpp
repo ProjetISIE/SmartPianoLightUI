@@ -2,6 +2,7 @@
 #include "Logger.hpp"
 #include "raylib.h"
 #include <csignal>
+#include <cstdint>
 #include <cstring>
 #include <format>
 #include <sstream>
@@ -15,11 +16,12 @@
 // Constantes
 // ---------------------------------------------------------------------------
 
-static constexpr int DEFAULT_SCREEN_W{1024};
-static constexpr int DEFAULT_SCREEN_H{768};
+static constexpr int32_t DEFAULT_SCREEN_W{1024};
+static constexpr int32_t DEFAULT_SCREEN_H{768};
 static constexpr float CONN_RETRY_INTERVAL{2.0f}; ///< Secondes entre tentatives
-static constexpr float RESULT_DISPLAY_DURATION{2.5f}; ///< Durée affichage résultat
-static constexpr int MAX_PROFILES{4};
+static constexpr float RESULT_DISPLAY_DURATION{
+    2.5f}; ///< Durée affichage résultat
+static constexpr int32_t MAX_PROFILES{4};
 
 // ---------------------------------------------------------------------------
 // Énumérations
@@ -60,14 +62,14 @@ enum class GameType { GAME_NOTE, GAME_CHORD, GAME_INVERSED };
 
 struct UserProfile {
     std::string name;
-    int topScore;
+    int32_t topScore;
     Color color;
 };
 
 /// Défi en cours reçu du moteur
 struct Challenge {
-    int id{0};
-    std::string displayText;        ///< Texte affiché (nom note ou accord)
+    int32_t id{0};
+    std::string displayText; ///< Texte affiché (nom note ou accord)
     std::vector<std::string> expectedNotes; ///< Notes à jouer
     bool isChord{false};
 };
@@ -82,10 +84,10 @@ struct ChallengeResult {
 
 /// Statistiques de fin de partie
 struct GameStats {
-    int perfect{0};
-    int partial{0};
-    int total{0};
-    long long duration{0};
+    int32_t perfect{0};
+    int32_t partial{0};
+    int32_t total{0};
+    int64_t duration{0};
 };
 
 // ---------------------------------------------------------------------------
@@ -101,21 +103,25 @@ struct GameStats {
  * @param fontSize Taille de la police
  * @return true si le bouton est survolé
  */
-static bool drawButton(Rectangle rec, const char* text, Color color,
-                       Vector2 mouse, int fontSize = 20) {
+[[nodiscard]] static bool drawButton(Rectangle rec, const char* text,
+                                     Color color, Vector2 mouse,
+                                     int32_t fontSize = 20) {
     bool hover = CheckCollisionPointRec(mouse, rec);
     if (hover) {
-        DrawRectangleRec(rec, Fade(color, 0.2f));
+        DrawRectangleRec(rec, Fade(color, 0.3f));
+        DrawRectangleLinesEx(rec, 3, color);
+    } else {
+        DrawRectangleLinesEx(rec, 2, Fade(color, 0.6f));
     }
-    DrawRectangleLinesEx(rec, 2, color);
-    int textWidth = MeasureText(text, fontSize);
-    DrawText(text, (int)(rec.x + rec.width / 2 - textWidth / 2),
-             (int)(rec.y + rec.height / 2 - fontSize / 2), fontSize, color);
+    int32_t textWidth = MeasureText(text, fontSize);
+    DrawText(text, (int32_t)(rec.x + rec.width / 2 - textWidth / 2),
+             (int32_t)(rec.y + rec.height / 2 - fontSize / 2), fontSize,
+             hover ? WHITE : color);
     return hover;
 }
 
 /// Retourne le chemin du binaire moteur, dans l'ordre de priorité
-static std::string findEngineBinary() {
+[[nodiscard]] static std::string findEngineBinary() {
     char exePath[4096]{};
     ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
     if (len > 0) {
@@ -133,7 +139,7 @@ static std::string findEngineBinary() {
 }
 
 /// Lance le moteur en arrière-plan ; retourne son PID ou -1
-static pid_t spawnEngine(const std::string& enginePath) {
+[[nodiscard]] static pid_t spawnEngine(const std::string& enginePath) {
     pid_t pid = fork();
     if (pid == 0) {
         execl(enginePath.c_str(), "engine", nullptr);
@@ -145,7 +151,7 @@ static pid_t spawnEngine(const std::string& enginePath) {
     return pid;
 }
 
-static std::vector<std::string> splitNotes(const std::string& s) {
+[[nodiscard]] static std::vector<std::string> splitNotes(const std::string& s) {
     std::vector<std::string> notes;
     std::istringstream iss(s);
     std::string tok;
@@ -153,7 +159,7 @@ static std::vector<std::string> splitNotes(const std::string& s) {
     return notes;
 }
 
-static std::string noteLetterToFrench(char c) {
+[[nodiscard]] static std::string noteLetterToFrench(char c) {
     switch (c) {
     case 'c': return "DO";
     case 'd': return "RE";
@@ -166,7 +172,7 @@ static std::string noteLetterToFrench(char c) {
     }
 }
 
-static std::string noteDisplayLabel(const std::string& note) {
+[[nodiscard]] static std::string noteDisplayLabel(const std::string& note) {
     if (note.empty()) return note;
     std::string label = noteLetterToFrench(note[0]);
     size_t i = 1;
@@ -180,11 +186,11 @@ static std::string noteDisplayLabel(const std::string& note) {
 
 struct NoteKey {
     bool isBlack{false};
-    int index{-1};
+    int32_t index{-1};
     bool valid{false};
 };
 
-static NoteKey resolveKey(const std::string& note) {
+[[nodiscard]] static NoteKey resolveKey(const std::string& note) {
     if (note.empty()) return {};
     char letter = note[0];
     size_t i = 1;
@@ -194,31 +200,31 @@ static NoteKey resolveKey(const std::string& note) {
         ++i;
     }
 
-    static constexpr int WHITE_MAP[7] = {5, 6, 0, 1, 2, 3, 4};
+    static constexpr int32_t WHITE_MAP[7] = {5, 6, 0, 1, 2, 3, 4};
     if (letter < 'a' || letter > 'g') return {};
-    int whiteIdx = WHITE_MAP[static_cast<int>(letter - 'a')];
+    int32_t whiteIdx = WHITE_MAP[static_cast<int>(letter - 'a')];
 
     if (mod.empty()) return {false, whiteIdx, true};
 
-    static const int WHITE_TO_BLACK[7] = {0, 1, -1, 2, 3, 4, -1};
+    static const int32_t WHITE_TO_BLACK[7] = {0, 1, -1, 2, 3, 4, -1};
 
     if (mod == "#") {
-        int bk = WHITE_TO_BLACK[whiteIdx];
+        int32_t bk = WHITE_TO_BLACK[whiteIdx];
         if (bk < 0) return {};
         return {true, bk, true};
     }
     if (mod == "b") {
         if (whiteIdx == 0) return {};
-        int prev = whiteIdx - 1;
-        int bk = WHITE_TO_BLACK[prev];
+        int32_t prev = whiteIdx - 1;
+        int32_t bk = WHITE_TO_BLACK[prev];
         if (bk < 0) return {};
         return {true, bk, true};
     }
     return {};
 }
 
-static bool noteInList(const std::string& noteBase,
-                       const std::vector<std::string>& list) {
+[[nodiscard]] static bool noteInList(const std::string& noteBase,
+                                     const std::vector<std::string>& list) {
     auto strip = [](const std::string& n) {
         if (n.empty()) return n;
         std::string s;
@@ -464,12 +470,13 @@ int main(int argc, char* argv[]) {
                     inputName[0] = '\0';
                     letterCount = 0;
                 }
+                if (IsKeyPressed(KEY_ESCAPE)) isNamingProfile = false;
             } else if (clicked) {
-                float totalW = profiles.size() * 220.0f +
-                               (profiles.size() < MAX_PROFILES ? 220.0f : 0.0f);
-                float startX = screenW / 2.0f - totalW / 2.0f + 20.0f;
+                float totalW = profiles.size() * 200.0f +
+                               (profiles.size() < MAX_PROFILES ? 200.0f : 0.0f) - 20.0f;
+                float startX = screenW / 2.0f - totalW / 2.0f;
                 for (int i = 0; i < (int)profiles.size(); i++) {
-                    Rectangle r = {startX + i * 220.0f, screenH / 2.0f - 110.0f,
+                    Rectangle r = {startX + i * 200.0f, screenH / 2.0f - 110.0f,
                                    180.0f, 220.0f};
                     Rectangle rDel = {r.x + 150.0f, r.y + 5.0f, 25.0f, 25.0f};
                     if (CheckCollisionPointRec(mouse, rDel)) {
@@ -484,7 +491,7 @@ int main(int argc, char* argv[]) {
                     }
                 }
                 if ((int)profiles.size() < MAX_PROFILES) {
-                    Rectangle btnPlus = {startX + (int)profiles.size() * 220.0f,
+                    Rectangle btnPlus = {startX + (int)profiles.size() * 200.0f,
                                          screenH / 2.0f - 110.0f, 180.0f,
                                          220.0f};
                     if (CheckCollisionPointRec(mouse, btnPlus))
@@ -502,8 +509,8 @@ int main(int argc, char* argv[]) {
                         selectedScale = static_cast<ScaleChoice>(i);
                 }
                 // Mode
-                Rectangle rMaj = {screenW / 2.0f - 75.0f, screenH * 0.85f, 70.0f,
-                                  40.0f};
+                Rectangle rMaj = {screenW / 2.0f - 75.0f, screenH * 0.85f,
+                                  70.0f, 40.0f};
                 Rectangle rMin = {screenW / 2.0f + 5.0f, screenH * 0.85f, 70.0f,
                                   40.0f};
                 if (CheckCollisionPointRec(mouse, rMaj))
@@ -533,8 +540,9 @@ int main(int argc, char* argv[]) {
                                   : gt == GameType::GAME_CHORD ? "chord"
                                                                : "inversed"},
                          {"scale", scaleStr[static_cast<int>(selectedScale)]},
-                         {"mode", selectedMode == ModeChoice::MODE_MAJ ? "maj"
-                                                                       : "min"}}));
+                         {"mode", selectedMode == ModeChoice::MODE_MAJ
+                                      ? "maj"
+                                      : "min"}}));
                 };
 
                 for (int i = 0; i < 3; i++) {
@@ -544,7 +552,10 @@ int main(int argc, char* argv[]) {
                         startGame(static_cast<GameType>(i));
                 }
 
-                if (mouse.y > screenH * 0.92f) appState = AppState::PROFILE_SELECT;
+                Rectangle btnBack = {screenW / 2.0f - 150.0f, screenH * 0.92f,
+                                     300.0f, 30.0f};
+                if (CheckCollisionPointRec(mouse, btnBack))
+                    appState = AppState::PROFILE_SELECT;
             }
         } else if (appState == AppState::PLAY) {
             Rectangle btnPause = {screenW - 85.0f, 25.0f, 60.0f, 60.0f};
@@ -646,32 +657,36 @@ int main(int argc, char* argv[]) {
                      (int)screenW / 2 -
                          MeasureText("SESSIONS UTILISATEURS", 30) / 2,
                      (int)(screenH * 0.15f), 30, vertEclatant);
-            float totalW = profiles.size() * 220.0f +
-                           (profiles.size() < MAX_PROFILES ? 220.0f : 0.0f);
-            float startX = screenW / 2.0f - totalW / 2.0f + 20.0f;
+            float totalW = profiles.size() * 200.0f +
+                           (profiles.size() < MAX_PROFILES ? 200.0f : 0.0f) - 20.0f;
+            float startX = screenW / 2.0f - totalW / 2.0f;
             for (int i = 0; i < (int)profiles.size(); i++) {
-                Rectangle r = {startX + i * 220.0f, screenH / 2.0f - 110.0f,
+                Rectangle r = {startX + i * 200.0f, screenH / 2.0f - 110.0f,
                                180.0f, 220.0f};
                 Rectangle rDel = {r.x + 150.0f, r.y + 5.0f, 25.0f, 25.0f};
                 bool hov = CheckCollisionPointRec(mouse, r);
-                DrawRectangleRec(r, Fade(profiles[i].color, hov ? 0.2f : 0.05f));
-                DrawRectangleLinesEx(r, 2, profiles[i].color);
+                bool hovDel = CheckCollisionPointRec(mouse, rDel);
+
+                DrawRectangleRec(r,
+                                 Fade(profiles[i].color, hov ? 0.3f : 0.1f));
+                DrawRectangleLinesEx(r, hov ? 3 : 2, profiles[i].color);
                 DrawText(profiles[i].name.c_str(), (int)r.x + 15,
-                         (int)r.y + 100, 20, profiles[i].color);
+                         (int)r.y + 100, 22, hov ? WHITE : profiles[i].color);
                 DrawText(TextFormat("Record: %i", profiles[i].topScore),
                          (int)r.x + 15, (int)r.y + 140, 15,
-                         Fade(profiles[i].color, 0.6f));
-                DrawRectangleRec(rDel, rougeErreur);
+                         Fade(profiles[i].color, 0.8f));
+
+                DrawRectangleRec(rDel, hovDel ? rougeErreur : Fade(rougeErreur, 0.6f));
                 DrawText("X", (int)rDel.x + 7, (int)rDel.y + 4, 20, WHITE);
             }
             if ((int)profiles.size() < MAX_PROFILES && !isNamingProfile) {
-                Rectangle rP = {startX + (int)profiles.size() * 220.0f,
+                Rectangle rP = {startX + (int)profiles.size() * 200.0f,
                                 screenH / 2.0f - 110.0f, 180.0f, 220.0f};
                 bool hov = CheckCollisionPointRec(mouse, rP);
-                DrawRectangleRec(rP, Fade(vertEclatant, hov ? 0.2f : 0.05f));
-                DrawRectangleLinesEx(rP, 2, Fade(vertEclatant, 0.3f));
+                DrawRectangleRec(rP, Fade(vertEclatant, hov ? 0.3f : 0.1f));
+                DrawRectangleLinesEx(rP, hov ? 3 : 2, Fade(vertEclatant, 0.5f));
                 DrawText("+", (int)rP.x + 75, (int)rP.y + 80, 60,
-                         Fade(vertEclatant, 0.3f));
+                         hov ? WHITE : Fade(vertEclatant, 0.5f));
             }
             if (isNamingProfile) {
                 DrawRectangle(0, 0, (int)screenW, (int)screenH,
@@ -681,6 +696,8 @@ int main(int argc, char* argv[]) {
                 DrawText(inputName,
                          (int)screenW / 2 - MeasureText(inputName, 40) / 2,
                          (int)screenH / 2, 40, WHITE);
+                DrawText("ESC pour annuler", (int)screenW / 2 - 70,
+                         (int)screenH / 2 + 60, 15, GRAY);
             }
         } else if (appState == AppState::MENU) {
             DrawText(
@@ -707,13 +724,13 @@ int main(int argc, char* argv[]) {
                 bool sel = (selectedScale == static_cast<ScaleChoice>(i));
                 bool hov = CheckCollisionPointRec(mouse, r);
                 DrawRectangleRec(
-                    r, Fade(vertEclatant, sel ? 0.2f : (hov ? 0.1f : 0.0f)));
+                    r, Fade(vertEclatant, sel ? 0.3f : (hov ? 0.2f : 0.0f)));
                 DrawRectangleLinesEx(
-                    r, 2, sel ? vertEclatant : Fade(vertEclatant, 0.35f));
+                    r, hov || sel ? 3 : 2, sel ? vertEclatant : Fade(vertEclatant, 0.4f));
                 DrawText(scaleLabels[i],
                          (int)r.x + 30 - MeasureText(scaleLabels[i], 20) / 2,
                          (int)r.y + 10, 20,
-                         sel ? vertEclatant : Fade(vertEclatant, 0.35f));
+                         (hov || sel) ? WHITE : Fade(vertEclatant, 0.4f));
             }
 
             // Mode
@@ -724,12 +741,13 @@ int main(int argc, char* argv[]) {
                 bool sel = ((i == 0) == (selectedMode == ModeChoice::MODE_MAJ));
                 bool hov = CheckCollisionPointRec(mouse, r);
                 DrawRectangleRec(
-                    r, Fade(vertEclatant, sel ? 0.2f : (hov ? 0.1f : 0.0f)));
+                    r, Fade(vertEclatant, sel ? 0.3f : (hov ? 0.2f : 0.0f)));
                 DrawRectangleLinesEx(
-                    r, 2, sel ? vertEclatant : Fade(vertEclatant, 0.35f));
-                DrawText(modes[i], (int)r.x + 35 - MeasureText(modes[i], 20) / 2,
+                    r, hov || sel ? 3 : 2, sel ? vertEclatant : Fade(vertEclatant, 0.4f));
+                DrawText(modes[i],
+                         (int)r.x + 35 - MeasureText(modes[i], 20) / 2,
                          (int)r.y + 10, 20,
-                         sel ? vertEclatant : Fade(vertEclatant, 0.35f));
+                         (hov || sel) ? WHITE : Fade(vertEclatant, 0.4f));
             }
 
             Rectangle btnBack = {screenW / 2.0f - 150.0f, screenH * 0.92f,
@@ -738,9 +756,10 @@ int main(int argc, char* argv[]) {
         } else if (appState == AppState::PLAY) {
             if (!isPaused) {
                 // Zone de défi
-                const char* chalTxt = currentChallenge.displayText.empty()
-                                          ? "Attente…"
-                                          : currentChallenge.displayText.c_str();
+                const char* chalTxt =
+                    currentChallenge.displayText.empty()
+                        ? "Attente…"
+                        : currentChallenge.displayText.c_str();
                 Rectangle rChal = {screenW / 2.0f - 175.0f, screenH * 0.25f,
                                    350.0f, 200.0f};
                 DrawRectangleLinesEx(rChal, 3, vertEclatant);
@@ -752,7 +771,8 @@ int main(int argc, char* argv[]) {
 
                 if (feedbackAlpha > 0.0f)
                     DrawText(feedbackMsg,
-                             (int)screenW / 2 - MeasureText(feedbackMsg, 40) / 2,
+                             (int)screenW / 2 -
+                                 MeasureText(feedbackMsg, 40) / 2,
                              (int)(screenH * 0.2f), 40,
                              Fade(feedbackColor, feedbackAlpha));
 
@@ -779,6 +799,26 @@ int main(int argc, char* argv[]) {
             float wW = screenW / 8.0f;
             float pianoY = screenH * 0.7f;
             float pianoH = screenH - pianoY;
+            float bW = wW * 0.6f;
+
+            int hovWhite = -1;
+            int hovBlack = -1;
+
+            if (!isPaused && mouse.y > pianoY) {
+                for (int i = 0; i < 5; i++) {
+                    Rectangle rN = {(blackKeyIndices[i] + 1) * wW - bW / 2.0f,
+                                    pianoY, bW, pianoH * 0.6f};
+                    if (CheckCollisionPointRec(mouse, rN)) {
+                        hovBlack = i;
+                        break;
+                    }
+                }
+                if (hovBlack == -1) {
+                    hovWhite = (int)(mouse.x / wW);
+                    if (hovWhite < 0 || hovWhite >= 8) hovWhite = -1;
+                }
+            }
+
             for (int i = 0; i < 8; i++) {
                 Rectangle r = {i * wW, pianoY, wW - 2.0f, pianoH};
                 NoteKey nk =
@@ -809,17 +849,18 @@ int main(int argc, char* argv[]) {
                                  : isExpected   ? orangeNote
                                  : blanchesAppuyees[i]
                                      ? profiles[currentUserIdx].color
+                                 : (hovWhite == i)
+                                     ? Fade(profiles[currentUserIdx].color, 0.3f)
                                      : BLANK;
                 if (keyColor.a != 0) DrawRectangleRec(r, keyColor);
-                DrawRectangleLinesEx(r, 2,
-                                     isPaused ? Fade(vertEclatant, 0.2f)
-                                              : vertEclatant);
+                DrawRectangleLinesEx(
+                    r, 2, isPaused ? Fade(vertEclatant, 0.2f) : vertEclatant);
                 DrawText(nomsNotes[i], (int)r.x + (int)(wW / 2) - 15,
                          (int)r.y + (int)pianoH - 30, 18,
-                         isPaused ? Fade(vertEclatant, 0.2f)
-                         : (keyColor.a != 0 ? vertFonce : vertEclatant));
+                         isPaused
+                             ? Fade(vertEclatant, 0.2f)
+                             : (keyColor.a != 0 ? vertFonce : vertEclatant));
             }
-            float bW = wW * 0.6f;
             for (int i = 0; i < 5; i++) {
                 Rectangle rN = {(blackKeyIndices[i] + 1) * wW - bW / 2.0f,
                                 pianoY, bW, pianoH * 0.6f};
@@ -841,6 +882,8 @@ int main(int argc, char* argv[]) {
                                : bkExpected ? orangeNote
                                : noiresAppuyees[i]
                                    ? profiles[currentUserIdx].color
+                               : (hovBlack == i)
+                                   ? Fade(profiles[currentUserIdx].color, 0.6f)
                                : isPaused ? Fade(DARKGRAY, 0.5f)
                                           : Color{30, 60, 30, 255};
                 DrawRectangleRec(rN, bkFill);
@@ -851,8 +894,8 @@ int main(int argc, char* argv[]) {
             if (isPaused) {
                 DrawRectangle(0, 0, (int)screenW, (int)screenH,
                               Fade(BLACK, 0.85f));
-                Rectangle mB = {screenW / 2.0f - 200.0f, screenH / 2.0f - 150.0f,
-                                400.0f, 300.0f};
+                Rectangle mB = {screenW / 2.0f - 200.0f,
+                                screenH / 2.0f - 150.0f, 400.0f, 300.0f};
                 DrawRectangleLinesEx(mB, 3, vertEclatant);
                 DrawText("PAUSE", (int)screenW / 2 - 60, (int)screenH / 2 - 110,
                          40, vertEclatant);
@@ -869,8 +912,8 @@ int main(int argc, char* argv[]) {
                      (int)(screenH * 0.15f), 40, vertEclatant);
             DrawText(TextFormat("SCORE FINAL : %i", scoreActuel),
                      (int)screenW / 2 -
-                         MeasureText(TextFormat("SCORE FINAL : %i", scoreActuel),
-                                     30) /
+                         MeasureText(
+                             TextFormat("SCORE FINAL : %i", scoreActuel), 30) /
                              2,
                      (int)(screenH * 0.3f), 30, orEclatant);
             DrawText(TextFormat("Parfaits   : %i / %i", gameStats.perfect,
@@ -881,12 +924,12 @@ int main(int argc, char* argv[]) {
                                 gameStats.total),
                      (int)screenW / 2 - 130, (int)(screenH * 0.5f), 22,
                      vertEclatant);
-            DrawText(TextFormat("Durée      : %lld s",
-                                gameStats.duration / 1000),
-                     (int)screenW / 2 - 130, (int)(screenH * 0.55f), 22,
-                     vertEclatant);
-            Rectangle btnBack = {screenW / 2.0f - 150.0f, screenH * 0.7f, 300.0f,
-                                 55.0f};
+            DrawText(
+                TextFormat("Durée      : %lld s", gameStats.duration / 1000),
+                (int)screenW / 2 - 130, (int)(screenH * 0.55f), 22,
+                vertEclatant);
+            Rectangle btnBack = {screenW / 2.0f - 150.0f, screenH * 0.7f,
+                                 300.0f, 55.0f};
             drawButton(btnBack, "RETOUR AU MENU", vertEclatant, mouse, 22);
         }
 

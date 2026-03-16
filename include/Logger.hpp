@@ -2,6 +2,7 @@
 #define LOGGER_H
 
 #include <chrono>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <format>
@@ -15,14 +16,14 @@ class Logger {
     static inline std::string logFilePath{"smartpiano.log"}; ///< Log standard
     static inline std::string errFilePath{"smartpiano.err.log"}; ///< Erreurs
     static inline std::mutex logMutex; ///< Mutex accès thread-safe
-    static constexpr uintmax_t MAX_LOG_SIZE{2 * 1024 * 1024}; ///< Maxi (2 Mo)
+    static constexpr uint64_t MAX_LOG_SIZE{2 * 1024 * 1024}; ///< Maxi (2 Mo)
 
   private:
     /**
      * @brief Retourne heure formatée
      * @return Horodatage "HH:MM:SS.mmm"
      */
-    static std::string time() {
+    [[nodiscard]] static std::string time() {
         try {
             return std::format("{:%T}", std::chrono::zoned_time{
                                             std::chrono::current_zone(),
@@ -38,7 +39,7 @@ class Logger {
      * @brief Retourne date formatée
      * @return Horodatage "YYYY-MM-DD"
      */
-    static std::string date() {
+    [[nodiscard]] static std::string date() {
         try {
             return std::format("{:%F}", std::chrono::zoned_time{
                                             std::chrono::current_zone(),

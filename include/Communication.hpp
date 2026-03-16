@@ -3,6 +3,7 @@
 
 #include "Message.hpp"
 #include <atomic>
+#include <cstdint>
 #include <mutex>
 #include <optional>
 #include <queue>
@@ -14,14 +15,14 @@
  * @param msg Message à sérialiser
  * @return Chaîne sérialisée, prête à être envoyée via le socket
  */
-std::string serialize(const Message& msg);
+[[nodiscard]] std::string serialize(const Message& msg);
 
 /**
  * @brief Désérialise une chaîne de caractères en message
  * @param data Données brutes reçues du socket
  * @return Message parsé
  */
-Message deserialize(const std::string& data);
+[[nodiscard]] Message deserialize(const std::string& data);
 
 /**
  * @brief Gère la communication client avec le moteur de jeu via Unix Domain
@@ -33,7 +34,7 @@ Message deserialize(const std::string& data);
 class Communication {
   private:
     std::string socketPath; ///< Chemin du socket Unix
-    int sockFd{-1};         ///< Descripteur de fichier du socket
+    int32_t sockFd{-1};     ///< Descripteur de fichier du socket
     std::atomic<bool> running{
         false};                 ///< Indique si le thread d'écoute doit tourner
     std::thread listenerThread; ///< Thread qui écoute les messages entrants
@@ -67,7 +68,7 @@ class Communication {
      * @brief Tente de se connecter au socket du moteur
      * @return `true` en cas de succès, `false` sinon
      */
-    bool connect();
+    [[nodiscard]] bool connect();
 
     /**
      * @brief Se déconnecte du socket et arrête le thread d'écoute
@@ -78,7 +79,7 @@ class Communication {
      * @brief Vérifie l'état de la connexion
      * @return `true` si le client est connecté, `false` sinon
      */
-    bool isConnected() const;
+    [[nodiscard]] bool isConnected() const noexcept;
 
     /**
      * @brief Envoie un message sérialisé au moteur
@@ -91,7 +92,7 @@ class Communication {
      * @return Un `std::optional<Message>` contenant le message, ou
      * `std::nullopt` si la file est vide
      */
-    std::optional<Message> popMessage();
+    [[nodiscard]] std::optional<Message> popMessage();
 };
 
 #endif // COMMUNICATION_HPP
