@@ -50,6 +50,7 @@ stdenv.mkDerivation rec {
     runHook preInstall
     mkdir --parents --verbose $out/bin
     cp --verbose src/main $out/bin/${pname}
+    cp --verbose ${engine}/bin/engine $out/bin/engine
     runHook postInstall
   '';
   meta = with lib; {
