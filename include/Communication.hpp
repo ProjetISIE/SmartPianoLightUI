@@ -1,45 +1,13 @@
 #ifndef COMMUNICATION_HPP
 #define COMMUNICATION_HPP
 
+#include "Message.hpp"
 #include <atomic>
-#include <map>
 #include <mutex>
 #include <optional>
 #include <queue>
 #include <string>
 #include <thread>
-
-/**
- * @brief Représente un message échangé via le protocole UDS
- *
- * Un message est composé d'un type et de champs optionnels key=value
- */
-struct Message {
-  private:
-    const std::string type;                          ///< Type du message
-    const std::map<std::string, std::string> fields; ///< Champs du message
-
-  public:
-    explicit Message(std::string messageType) : type(std::move(messageType)) {}
-
-    Message(std::string messageType,
-            std::map<std::string, std::string> messageFields)
-        : type(std::move(messageType)), fields(std::move(messageFields)) {}
-
-    std::string getField(const std::string& key) const {
-        auto it = this->fields.find(key);
-        return (it != this->fields.end()) ? it->second : "";
-    }
-
-    bool hasField(const std::string& key) const {
-        return this->fields.find(key) != this->fields.end();
-    }
-
-    std::string getType() const { return this->type; }
-    std::map<std::string, std::string> getFields() const {
-        return this->fields;
-    }
-};
 
 /**
  * @brief Sérialise un message en chaîne selon le protocole
