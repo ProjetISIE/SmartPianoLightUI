@@ -1,6 +1,5 @@
 {
   cmake,
-  clang,
   doctest,
   engine,
   glfw,
@@ -16,16 +15,17 @@
   ninja,
   pkg-config,
   raylib,
-  self,
   stdenv,
   wayland,
+  xorg,
 }:
-stdenv.mkDerivation {
-  pname = "ui";
+stdenv.mkDerivation rec {
+  pname = "smart-piano-ui";
   version = "0.0.0";
   src = self;
+  src = lib.cleanSource ./.;
   nativeBuildInputs = [
-    clang # C/C++ compiler
+    # clang # C/C++ compiler
     cmake # Modern build tool
     llvm # For llvm-cov
     ninja # Modern build tool
@@ -51,7 +51,14 @@ stdenv.mkDerivation {
     cmakeFlagsArray+=("-DENGINE_PATH=${engine}")
   '';
   installPhase = ''
+    runHook preInstall
     mkdir --parents --verbose $out/bin
-    cp --verbose src/main $out/bin/ui
+    cp --verbose src/main $out/bin/${pname}
+    runHook postInstall
   '';
+  meta = with lib; {
+    description = "Smart Piano User Interface";
+    license = licenses.gpl3Plus;
+    platforms = platforms.all;
+  };
 }
