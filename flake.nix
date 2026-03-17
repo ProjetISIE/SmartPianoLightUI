@@ -114,8 +114,8 @@
                   # export SDL_VIDEODRIVER=wayland 
                   # export _JAVA_AWT_WM_NONREPARENTING=1
                   export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath defaultPkg.buildInputs}:$LD_LIBRARY_PATH"
-                  cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Debug \
-                    -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+                  cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Debug \
+                    -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON # -S .
                 '';
               };
         }

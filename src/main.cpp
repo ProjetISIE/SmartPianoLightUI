@@ -53,6 +53,9 @@ enum class ScaleChoice {
 /// Mode de la gamme
 enum class ModeChoice { MODE_MAJ, MODE_MIN };
 
+/// Type de notation
+enum class NotationMode { SYLLABIC, LETTER, STAFF };
+
 /// Type de jeu
 enum class GameType { GAME_NOTE, GAME_CHORD, GAME_INVERSED };
 
@@ -72,6 +75,7 @@ struct Challenge {
     std::string displayText; ///< Texte affiché (nom note ou accord)
     std::vector<std::string> expectedNotes; ///< Notes à jouer
     bool isChord{false};
+    std::string rawName; ///< Nom brut envoyé par le moteur (ex: "c", "c#", "C maj")
 };
 
 /// Résultat du dernier challenge
@@ -160,7 +164,7 @@ struct GameStats {
 }
 
 [[nodiscard]] static std::string noteLetterToFrench(char c) {
-    switch (c) {
+    switch (std::tolower(static_cast<unsigned char>(c))) {
     case 'c': return "DO";
     case 'd': return "RE";
     case 'e': return "MI";
@@ -172,16 +176,35 @@ struct GameStats {
     }
 }
 
-[[nodiscard]] static std::string noteDisplayLabel(const std::string& note) {
+[[nodiscard]] static std::string noteDisplayLabel(const std::string& note, NotationMode mode) {
     if (note.empty()) return note;
-    std::string label = noteLetterToFrench(note[0]);
-    size_t i = 1;
-    if (i < note.size() && (note[i] == '#' || note[i] == 'b')) {
-        label += (note[i] == '#') ? "#" : "b";
-        ++i;
+    if (mode == NotationMode::LETTER) {
+        std::string label;
+        label += (char)std::toupper(static_cast<unsigned char>(note[0]));
+        size_t i = 1;
+        if (i < note.size() && (note[i] == '#' || note[i] == 'b')) {
+            label += note[i];
+            ++i;
+        }
+        if (i < note.size()) label += " " + note.substr(i);
+        return label;
+    } else {
+        std::string label = noteLetterToFrench(note[0]);
+        size_t i = 1;
+        if (i < note.size() && (note[i] == '#' || note[i] == 'b')) {
+            label += (note[i] == '#') ? "#" : "b";
+            ++i;
+        }
+        if (i < note.size()) label += " " + note.substr(i);
+        return label;
     }
-    if (i < note.size()) label += " " + note.substr(i);
-    return label;
+}
+
+[[nodiscard]] static std::string getNotationLabel(int32_t whiteIdx, NotationMode mode) {
+    static const char* syllabic[] = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI"};
+    static const char* letters[] = {"C", "D", "E", "F", "G", "A", "B"};
+    if (mode == NotationMode::LETTER) return letters[whiteIdx % 7];
+    return syllabic[whiteIdx % 7];
 }
 
 struct NoteKey {
@@ -223,6 +246,80 @@ struct NoteKey {
 
     int32_t bkIdx = (whiteIdx / 7) * 5 + bkLocal;
     return {true, bkIdx, true};
+}
+
+/**
+ * Dessine une portée de 5 lignes avec les notes indiquées.
+ * @param rec Zone d'affichage
+ * @param notes Liste des notes à afficher (format "c4", "c#4", etc.)
+ * @param color Couleur des lignes et des notes
+ */
+static void drawStaff(Rectangle rec, const std::vector<std::string>& notes,
+                      Color color) {
+    float lineSpacing = rec.height / 6.0f;
+    float centerY = rec.y + rec.height / 2.0f;
+
+    // Dessin des 5 lignes (E4, G4, B4, D5, F5 en clé de sol simplifiée)
+    // On centre la portée verticalement
+    for (int i = 0; i < 5; i++) {
+        float y = centerY + (2 - i) * lineSpacing;
+        DrawLineEx({rec.x, y}, {rec.x + rec.width, y}, 2, color);
+    }
+
+    // Dessin des notes
+    float noteX = rec.x + rec.width / 2.0f;
+    float noteRadius = lineSpacing * 0.45f;
+
+    for (const auto& note : notes) {
+        NoteKey nk = resolveKey(note);
+        if (!nk.valid) continue;
+
+        // On calcule la position verticale par rapport à C4 (pos 0)
+        // En clé de sol, E4 est sur la première ligne (i=0, pos 2)
+        // C4 est 2 positions sous la première ligne (pos 0)
+        // Position relative en demi-espaces : C4=0, D4=1, E4=2...
+        // y = centerY + (2 - pos/2) * lineSpacing
+        float whitePos = static_cast<float>(nk.index);
+        float noteY = centerY + (2.0f - whitePos / 2.0f) * lineSpacing;
+
+        // Ledger lines (lignes supplémentaires)
+        if (nk.index <= 0) { // C4 et en dessous
+            for (int p = 0; p >= nk.index; p -= 2) {
+                float ly = centerY + (2.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
+                DrawLineEx({noteX - noteRadius * 1.5f, ly},
+                           {noteX + noteRadius * 1.5f, ly}, 2, color);
+            }
+        } else if (nk.index >= 12) { // A5 et au dessus
+            for (int p = 12; p <= nk.index; p += 2) {
+                float ly = centerY + (2.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
+                DrawLineEx({noteX - noteRadius * 1.5f, ly},
+                           {noteX + noteRadius * 1.5f, ly}, 2, color);
+            }
+        }
+
+        // Tête de note (noire/quarter note)
+        DrawEllipse((int)noteX, (int)noteY, noteRadius * 1.2f, noteRadius, color);
+
+        // Hampe (stem) - vers le haut si note basse, vers le bas si note haute
+        float stemLen = lineSpacing * 3.0f;
+        if (nk.index < 6) { // Sous la ligne du milieu (B4)
+            DrawLineEx({noteX + noteRadius * 1.1f, noteY},
+                       {noteX + noteRadius * 1.1f, noteY - stemLen}, 2, color);
+        } else {
+            DrawLineEx({noteX - noteRadius * 1.1f, noteY},
+                       {noteX - noteRadius * 1.1f, noteY + stemLen}, 2, color);
+        }
+
+        // Altérations (si note noire)
+        if (nk.isBlack) {
+            // On cherche si c'est un # ou b dans la chaîne originale
+            bool isSharp = (note.find('#') != std::string::npos);
+            const char* altTxt = isSharp ? "#" : "b";
+            DrawText(altTxt, (int)(noteX - noteRadius * 2.5f),
+                     (int)(noteY - noteRadius), (int)(lineSpacing * 1.5f),
+                     color);
+        }
+    }
 }
 
 [[nodiscard]] static bool noteInList(const std::string& noteBase,
@@ -290,6 +387,7 @@ int main(int argc, char* argv[]) {
     GameType selectedGame = GameType::GAME_NOTE;
 
     int scoreActuel = 0;
+    NotationMode selectedNotation = NotationMode::SYLLABIC;
 
     Challenge currentChallenge;
     ChallengeResult lastResult;
@@ -309,8 +407,6 @@ int main(int argc, char* argv[]) {
     EngineState engState = EngineState::ENG_DISCONNECTED;
     float connRetryTimer = 0.0f;
 
-    const char* nomsNotes[] = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI",
-                               "DO", "RE", "MI", "FA", "SOL", "LA", "SI"};
     bool blanchesAppuyees[14]{};
     bool noiresAppuyees[10]{};
     const int blackKeyIndices[] = {0, 1, 3, 4, 5, 7, 8, 10, 11, 12};
@@ -369,14 +465,16 @@ int main(int argc, char* argv[]) {
                     currentChallenge.id =
                         msg.hasField("id") ? std::stoi(msg.getField("id")) : 0;
                     std::string noteName = msg.getField("note");
-                    currentChallenge.displayText = noteDisplayLabel(noteName);
+                    currentChallenge.rawName = noteName;
+                    currentChallenge.displayText = noteDisplayLabel(noteName, selectedNotation);
                     currentChallenge.expectedNotes = {noteName};
                     currentChallenge.isChord = false;
                     engState = EngineState::ENG_PLAYING;
                 } else if (type == "chord") {
                     currentChallenge.id =
                         msg.hasField("id") ? std::stoi(msg.getField("id")) : 0;
-                    currentChallenge.displayText = msg.getField("name");
+                    currentChallenge.rawName = msg.getField("name");
+                    currentChallenge.displayText = currentChallenge.rawName;
                     currentChallenge.expectedNotes =
                         splitNotes(msg.getField("notes"));
                     currentChallenge.isChord = true;
@@ -570,6 +668,13 @@ int main(int argc, char* argv[]) {
                                      300.0f, 30.0f};
                 if (CheckCollisionPointRec(mouse, btnBack))
                     appState = AppState::PROFILE_SELECT;
+
+                // Toggle notation
+                Rectangle rNotation = {screenW - 290, screenH - 80, 250, 40};
+                if (CheckCollisionPointRec(mouse, rNotation)) {
+                    selectedNotation = static_cast<NotationMode>(
+                        (static_cast<int>(selectedNotation) + 1) % 3);
+                }
             }
         } else if (appState == AppState::PLAY) {
             Rectangle btnPause = {screenW - 85.0f, 25.0f, 60.0f, 60.0f};
@@ -726,7 +831,7 @@ int main(int argc, char* argv[]) {
             for (int i = 0; i < 3; i++) {
                 Rectangle r = {screenW / 2.0f - 250.0f,
                                screenH * 0.3f + i * 100.0f, 500.0f, 80.0f};
-                drawButton(r, gameTitles[i], vertEclatant, mouse, 25);
+                (void)drawButton(r, gameTitles[i], vertEclatant, mouse, 25);
             }
 
             // Gamme
@@ -768,30 +873,48 @@ int main(int argc, char* argv[]) {
 
             Rectangle btnBack = {screenW / 2.0f - 150.0f, screenH * 0.92f,
                                  300.0f, 30.0f};
-            drawButton(btnBack, "CHANGER D'UTILISATEUR", GRAY, mouse, 15);
+            (void)drawButton(btnBack, "CHANGER D'UTILISATEUR", GRAY, mouse, 15);
 
             // Toggle clavier
             Rectangle rKbd = {40, screenH - 80, 250, 40};
-            bool hovK = CheckCollisionPointRec(mouse, rKbd);
             DrawRectangleLinesEx(rKbd, 2, showKeyboard ? vertEclatant : GRAY);
             DrawText(showKeyboard ? "CLAVIER : ON" : "CLAVIER : OFF",
                      (int)rKbd.x + 20, (int)rKbd.y + 10, 20,
                      showKeyboard ? vertEclatant : GRAY);
+
+            // Toggle notation
+            Rectangle rNotation = {screenW - 290, screenH - 80, 250, 40};
+            const char* notationText =
+                selectedNotation == NotationMode::SYLLABIC ? "NOTATION : DO RE MI"
+                : selectedNotation == NotationMode::LETTER ? "NOTATION : A B C"
+                                                           : "NOTATION : PORTEE";
+            DrawRectangleLinesEx(rNotation, 2, vertEclatant);
+            DrawText(notationText, (int)rNotation.x + 20, (int)rNotation.y + 10,
+                     20, vertEclatant);
         } else if (appState == AppState::PLAY) {
             if (!isPaused) {
                 // Zone de défi
-                const char* chalTxt =
-                    currentChallenge.displayText.empty()
-                        ? "Attente…"
-                        : currentChallenge.displayText.c_str();
                 Rectangle rChal = {screenW / 2.0f - 175.0f, screenH * 0.25f,
                                    350.0f, 200.0f};
                 DrawRectangleLinesEx(rChal, 3, vertEclatant);
-                int txtSize =
-                    (int)currentChallenge.displayText.size() > 8 ? 28 : 36;
-                DrawText(chalTxt,
-                         (int)screenW / 2 - MeasureText(chalTxt, txtSize) / 2,
-                         (int)rChal.y + 80, txtSize, vertEclatant);
+
+                if (selectedNotation == NotationMode::STAFF && !currentChallenge.expectedNotes.empty()) {
+                    drawStaff(rChal, currentChallenge.expectedNotes, vertEclatant);
+                } else {
+                    std::string display;
+                    if (currentChallenge.expectedNotes.empty()) {
+                        display = "Attente…";
+                    } else if (currentChallenge.isChord) {
+                        display = currentChallenge.displayText;
+                    } else {
+                        display = noteDisplayLabel(currentChallenge.expectedNotes[0], selectedNotation);
+                    }
+                    const char* chalTxt = display.c_str();
+                    int txtSize = (int)display.size() > 8 ? 28 : 36;
+                    DrawText(chalTxt,
+                             (int)screenW / 2 - MeasureText(chalTxt, txtSize) / 2,
+                             (int)rChal.y + 80, txtSize, vertEclatant);
+                }
 
                 if (feedbackAlpha > 0.0f)
                     DrawText(feedbackMsg,
@@ -801,11 +924,11 @@ int main(int argc, char* argv[]) {
                              Fade(feedbackColor, feedbackAlpha));
 
                 Rectangle btnMenu = {25.0f, 25.0f, 120.0f, 45.0f};
-                drawButton(btnMenu, "MENU", vertEclatant, mouse);
+                (void)drawButton(btnMenu, "MENU", vertEclatant, mouse);
 
                 if (engState == EngineState::ENG_PLAYED) {
                     Rectangle btnReady = {160.0f, 25.0f, 160.0f, 45.0f};
-                    drawButton(btnReady, "SUIVANT", orEclatant, mouse);
+                    (void)drawButton(btnReady, "SUIVANT", orEclatant, mouse);
                 }
             }
 
@@ -813,7 +936,7 @@ int main(int argc, char* argv[]) {
                      60, vertEclatant);
 
             Rectangle btnPause = {screenW - 85.0f, 25.0f, 60.0f, 60.0f};
-            drawButton(btnPause, "", vertEclatant, mouse);
+            (void)drawButton(btnPause, "", vertEclatant, mouse);
             DrawRectangle((int)btnPause.x + 18, (int)btnPause.y + 18, 8, 24,
                           vertEclatant);
             DrawRectangle((int)btnPause.x + 34, (int)btnPause.y + 18, 8, 24,
@@ -892,7 +1015,8 @@ int main(int argc, char* argv[]) {
                                          isPaused ? Fade(vertEclatant, 0.2f)
                                                   : vertEclatant);
                     if (numKeys <= 7) {
-                        DrawText(nomsNotes[i], (int)r.x + (int)(wW / 2) - 15,
+                        std::string label = getNotationLabel(i, selectedNotation);
+                        DrawText(label.c_str(), (int)r.x + (int)(wW / 2) - MeasureText(label.c_str(), 18) / 2,
                                  (int)r.y + (int)pianoH - 30, 18,
                                  isPaused ? Fade(vertEclatant, 0.2f)
                                           : (keyColor.a != 0 ? vertFonce
@@ -945,8 +1069,8 @@ int main(int argc, char* argv[]) {
                                        screenH / 2.0f - 50.0f, 300.0f, 60.0f};
                 Rectangle btnQuit = {screenW / 2.0f - 150.0f,
                                      screenH / 2.0f + 30.0f, 300.0f, 60.0f};
-                drawButton(btnResume, "REPRENDRE", vertEclatant, mouse, 25);
-                drawButton(btnQuit, "QUITTER", rougeErreur, mouse, 25);
+                (void)drawButton(btnResume, "REPRENDRE", vertEclatant, mouse, 25);
+                (void)drawButton(btnQuit, "QUITTER", rougeErreur, mouse, 25);
             }
         } else if (appState == AppState::GAME_OVER) {
             DrawText("FIN DE PARTIE",
@@ -972,7 +1096,7 @@ int main(int argc, char* argv[]) {
                 vertEclatant);
             Rectangle btnBack = {screenW / 2.0f - 150.0f, screenH * 0.7f,
                                  300.0f, 55.0f};
-            drawButton(btnBack, "RETOUR AU MENU", vertEclatant, mouse, 22);
+            (void)drawButton(btnBack, "RETOUR AU MENU", vertEclatant, mouse, 22);
         }
 
         EndDrawing();
