@@ -46,6 +46,33 @@
         // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
           aarch64-linux-default = mkUi pkgs.pkgsCross.aarch64-multiplatform;
           aarch64-linux-smart-piano = mkUi pkgs.pkgsCross.aarch64-multiplatform;
+          containerImage = pkgs.dockerTools.buildImage {
+            name = "smart-piano-container";
+            tag = "latest";
+            copyToRoot = pkgs.buildEnv {
+              name = "image-root";
+              paths =
+                with pkgs;
+                [
+                  bashInteractive
+                  coreutils
+                  clang-tools
+                  cmake
+                  ninja
+                  pkg-config
+                  git
+                  doctest
+                  valgrind
+                  cppcheck
+                ]
+                ++ (mkUi pkgs).buildInputs
+                ++ (mkUi pkgs).nativeBuildInputs;
+              pathsToLink = [ "/bin" ];
+            };
+            config = {
+              Cmd = [ "${pkgs.bashInteractive}/bin/bash" ];
+            };
+          };
         }
       );
       devShells = forSystems (

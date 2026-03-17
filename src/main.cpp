@@ -272,7 +272,6 @@ int main(int argc, char* argv[]) {
     const Color vertEclatant = {100, 255, 100, 255};
     const Color orEclatant = {255, 215, 0, 255};
     const Color rougeErreur = {230, 41, 55, 255};
-    const Color bleuInfo = {100, 180, 255, 255};
     const Color orangeNote = {255, 140, 0, 255};
 
     std::vector<UserProfile> profiles{{"Utilisateur", 0, SKYBLUE}};
@@ -308,8 +307,8 @@ int main(int argc, char* argv[]) {
     EngineState engState = EngineState::ENG_DISCONNECTED;
     float connRetryTimer = 0.0f;
 
-    const char* nomsNotes[] = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI", "DO"};
-    bool blanchesAppuyees[8]{};
+    const char* nomsNotes[] = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI"};
+    bool blanchesAppuyees[7]{};
     bool noiresAppuyees[5]{};
     const int blackKeyIndices[] = {0, 1, 3, 4, 5};
 
@@ -335,6 +334,10 @@ int main(int argc, char* argv[]) {
                 lastResult.active = false;
                 lastResult.correct.clear();
                 lastResult.incorrect.clear();
+                if (engState == EngineState::ENG_PLAYED) {
+                    comm.send(Message("ready"));
+                    engState = EngineState::ENG_PLAYING;
+                }
             }
         }
 
@@ -601,7 +604,7 @@ int main(int argc, char* argv[]) {
                 for (auto& b : noiresAppuyees) b = false;
                 float pianoY = screenH * 0.7f;
                 if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && mouse.y > pianoY) {
-                    float wW = screenW / 8.0f;
+                    float wW = screenW / 7.0f;
                     float bW = wW * 0.6f;
                     bool hitBlack = false;
                     for (int i = 0; i < 5; i++) {
@@ -615,7 +618,7 @@ int main(int argc, char* argv[]) {
                     }
                     if (!hitBlack) {
                         int idx = (int)(mouse.x / wW);
-                        if (idx >= 0 && idx < 8) blanchesAppuyees[idx] = true;
+                        if (idx >= 0 && idx < 7) blanchesAppuyees[idx] = true;
                     }
                 }
             }
@@ -790,7 +793,7 @@ int main(int argc, char* argv[]) {
                           vertEclatant);
 
             // Piano
-            float wW = screenW / 8.0f;
+            float wW = screenW / 7.0f;
             float pianoY = screenH * 0.7f;
             float pianoH = screenH - pianoY;
             float bW = wW * 0.6f;
@@ -809,14 +812,14 @@ int main(int argc, char* argv[]) {
                 }
                 if (hovBlack == -1) {
                     hovWhite = (int)(mouse.x / wW);
-                    if (hovWhite < 0 || hovWhite >= 8) hovWhite = -1;
+                    if (hovWhite < 0 || hovWhite >= 7) hovWhite = -1;
                 }
             }
 
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 7; i++) {
                 Rectangle r = {i * wW, pianoY, wW - 2.0f, pianoH};
                 NoteKey nk =
-                    resolveKey(i < 7 ? std::string(1, "cdefgab"[i]) : "c");
+                    resolveKey(std::string(1, "cdefgab"[i]));
                 bool isExpected = false, isCorrectKey = false,
                      isWrongKey = false;
                 if (nk.valid && !nk.isBlack) {
