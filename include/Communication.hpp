@@ -93,6 +93,11 @@ class Communication {
      * `std::nullopt` si la file est vide
      */
     [[nodiscard]] std::optional<Message> popMessage();
+
+    /**
+     * @brief Vide la file d'attente des messages reçus
+     */
+    void clearQueue();
 };
 
 #endif // COMMUNICATION_HPP

@@ -111,6 +111,11 @@ std::optional<Message> Communication::popMessage() {
     return msg;
 }
 
+void Communication::clearQueue() {
+    std::lock_guard<std::mutex> lock(this->queueMutex);
+    while (!this->messageQueue.empty()) this->messageQueue.pop();
+}
+
 void Communication::listen() {
     char buffer[4096];
     std::string currentMessageData;
