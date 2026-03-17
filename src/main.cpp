@@ -200,27 +200,29 @@ struct NoteKey {
         ++i;
     }
 
+    int32_t octave = 4; // Par défaut octave 4
+    if (i < note.size() && std::isdigit(note[i])) {
+        octave = note[i] - '0';
+    }
+
     static constexpr int32_t WHITE_MAP[7] = {5, 6, 0, 1, 2, 3, 4};
     if (letter < 'a' || letter > 'g') return {};
     int32_t whiteIdx = WHITE_MAP[static_cast<int>(letter - 'a')];
 
+    // On décale selon l'octave (on supporte octave 4 et 5 pour le 2-octaves)
+    // On normalise : octave 4 -> base 0, octave 5 -> base 7
+    int32_t baseIdx = (octave - 4) * 7;
+    whiteIdx += baseIdx;
+
     if (mod.empty()) return {false, whiteIdx, true};
 
-    static const int32_t WHITE_TO_BLACK[7] = {0, 1, -1, 2, 3, 4, -1};
+    static const int32_t WHITE_TO_BLACK_PER_OCTAVE[7] = {0, 1, -1, 2, 3, 4, -1};
+    int32_t localWhiteIdx = whiteIdx % 7;
+    int32_t bkLocal = WHITE_TO_BLACK_PER_OCTAVE[localWhiteIdx];
+    if (bkLocal < 0) return {};
 
-    if (mod == "#") {
-        int32_t bk = WHITE_TO_BLACK[whiteIdx];
-        if (bk < 0) return {};
-        return {true, bk, true};
-    }
-    if (mod == "b") {
-        if (whiteIdx == 0) return {};
-        int32_t prev = whiteIdx - 1;
-        int32_t bk = WHITE_TO_BLACK[prev];
-        if (bk < 0) return {};
-        return {true, bk, true};
-    }
-    return {};
+    int32_t bkIdx = (whiteIdx / 7) * 5 + bkLocal;
+    return {true, bkIdx, true};
 }
 
 [[nodiscard]] static bool noteInList(const std::string& noteBase,
@@ -307,10 +309,12 @@ int main(int argc, char* argv[]) {
     EngineState engState = EngineState::ENG_DISCONNECTED;
     float connRetryTimer = 0.0f;
 
-    const char* nomsNotes[] = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI"};
-    bool blanchesAppuyees[7]{};
-    bool noiresAppuyees[5]{};
-    const int blackKeyIndices[] = {0, 1, 3, 4, 5};
+    const char* nomsNotes[] = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI",
+                               "DO", "RE", "MI", "FA", "SOL", "LA", "SI"};
+    bool blanchesAppuyees[14]{};
+    bool noiresAppuyees[10]{};
+    const int blackKeyIndices[] = {0, 1, 3, 4, 5, 7, 8, 10, 11, 12};
+    bool showKeyboard = true;
 
     float timeoutTimer = 0.0f;
 
@@ -475,8 +479,9 @@ int main(int argc, char* argv[]) {
                 }
                 if (IsKeyPressed(KEY_ESCAPE)) isNamingProfile = false;
             } else if (clicked) {
-                float totalW = profiles.size() * 200.0f +
-                               (profiles.size() < MAX_PROFILES ? 200.0f : 0.0f) - 20.0f;
+                float totalW =
+                    profiles.size() * 200.0f +
+                    (profiles.size() < MAX_PROFILES ? 200.0f : 0.0f) - 20.0f;
                 float startX = screenW / 2.0f - totalW / 2.0f;
                 for (int i = 0; i < (int)profiles.size(); i++) {
                     Rectangle r = {startX + i * 200.0f, screenH / 2.0f - 110.0f,
@@ -503,6 +508,12 @@ int main(int argc, char* argv[]) {
             }
         } else if (appState == AppState::MENU) {
             if (clicked) {
+                // Toggle clavier
+                Rectangle rKbd = {40, screenH - 80, 220, 40};
+                if (CheckCollisionPointRec(mouse, rKbd)) {
+                    showKeyboard = !showKeyboard;
+                }
+
                 // Gamme
                 float scaleStartX = screenW / 2.0f - (7.0f * 70.0f) / 2.0f;
                 for (int i = 0; i < 7; i++) {
@@ -599,15 +610,19 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            if (!isPaused) {
+            if (!isPaused && showKeyboard) {
                 for (auto& b : blanchesAppuyees) b = false;
                 for (auto& b : noiresAppuyees) b = false;
                 float pianoY = screenH * 0.7f;
+                int32_t numKeys =
+                    (selectedGame == GameType::GAME_NOTE) ? 7 : 14;
+                int32_t numBlack =
+                    (selectedGame == GameType::GAME_NOTE) ? 5 : 10;
                 if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && mouse.y > pianoY) {
-                    float wW = screenW / 7.0f;
+                    float wW = screenW / (float)numKeys;
                     float bW = wW * 0.6f;
                     bool hitBlack = false;
-                    for (int i = 0; i < 5; i++) {
+                    for (int i = 0; i < numBlack; i++) {
                         Rectangle rN = {(blackKeyIndices[i] + 1) * wW - bW / 2,
                                         pianoY, bW, (screenH - pianoY) * 0.6f};
                         if (CheckCollisionPointRec(mouse, rN)) {
@@ -618,7 +633,8 @@ int main(int argc, char* argv[]) {
                     }
                     if (!hitBlack) {
                         int idx = (int)(mouse.x / wW);
-                        if (idx >= 0 && idx < 7) blanchesAppuyees[idx] = true;
+                        if (idx >= 0 && idx < numKeys)
+                            blanchesAppuyees[idx] = true;
                     }
                 }
             }
@@ -655,7 +671,8 @@ int main(int argc, char* argv[]) {
                          MeasureText("SESSIONS UTILISATEURS", 30) / 2,
                      (int)(screenH * 0.15f), 30, vertEclatant);
             float totalW = profiles.size() * 200.0f +
-                           (profiles.size() < MAX_PROFILES ? 200.0f : 0.0f) - 20.0f;
+                           (profiles.size() < MAX_PROFILES ? 200.0f : 0.0f) -
+                           20.0f;
             float startX = screenW / 2.0f - totalW / 2.0f;
             for (int i = 0; i < (int)profiles.size(); i++) {
                 Rectangle r = {startX + i * 200.0f, screenH / 2.0f - 110.0f,
@@ -664,8 +681,7 @@ int main(int argc, char* argv[]) {
                 bool hov = CheckCollisionPointRec(mouse, r);
                 bool hovDel = CheckCollisionPointRec(mouse, rDel);
 
-                DrawRectangleRec(r,
-                                 Fade(profiles[i].color, hov ? 0.3f : 0.1f));
+                DrawRectangleRec(r, Fade(profiles[i].color, hov ? 0.3f : 0.1f));
                 DrawRectangleLinesEx(r, hov ? 3 : 2, profiles[i].color);
                 DrawText(profiles[i].name.c_str(), (int)r.x + 15,
                          (int)r.y + 100, 22, hov ? WHITE : profiles[i].color);
@@ -673,7 +689,8 @@ int main(int argc, char* argv[]) {
                          (int)r.x + 15, (int)r.y + 140, 15,
                          Fade(profiles[i].color, 0.8f));
 
-                DrawRectangleRec(rDel, hovDel ? rougeErreur : Fade(rougeErreur, 0.6f));
+                DrawRectangleRec(rDel, hovDel ? rougeErreur
+                                              : Fade(rougeErreur, 0.6f));
                 DrawText("X", (int)rDel.x + 7, (int)rDel.y + 4, 20, WHITE);
             }
             if ((int)profiles.size() < MAX_PROFILES && !isNamingProfile) {
@@ -722,8 +739,9 @@ int main(int argc, char* argv[]) {
                 bool hov = CheckCollisionPointRec(mouse, r);
                 DrawRectangleRec(
                     r, Fade(vertEclatant, sel ? 0.3f : (hov ? 0.2f : 0.0f)));
-                DrawRectangleLinesEx(
-                    r, hov || sel ? 3 : 2, sel ? vertEclatant : Fade(vertEclatant, 0.4f));
+                DrawRectangleLinesEx(r, hov || sel ? 3 : 2,
+                                     sel ? vertEclatant
+                                         : Fade(vertEclatant, 0.4f));
                 DrawText(scaleLabels[i],
                          (int)r.x + 30 - MeasureText(scaleLabels[i], 20) / 2,
                          (int)r.y + 10, 20,
@@ -739,8 +757,9 @@ int main(int argc, char* argv[]) {
                 bool hov = CheckCollisionPointRec(mouse, r);
                 DrawRectangleRec(
                     r, Fade(vertEclatant, sel ? 0.3f : (hov ? 0.2f : 0.0f)));
-                DrawRectangleLinesEx(
-                    r, hov || sel ? 3 : 2, sel ? vertEclatant : Fade(vertEclatant, 0.4f));
+                DrawRectangleLinesEx(r, hov || sel ? 3 : 2,
+                                     sel ? vertEclatant
+                                         : Fade(vertEclatant, 0.4f));
                 DrawText(modes[i],
                          (int)r.x + 35 - MeasureText(modes[i], 20) / 2,
                          (int)r.y + 10, 20,
@@ -750,6 +769,14 @@ int main(int argc, char* argv[]) {
             Rectangle btnBack = {screenW / 2.0f - 150.0f, screenH * 0.92f,
                                  300.0f, 30.0f};
             drawButton(btnBack, "CHANGER D'UTILISATEUR", GRAY, mouse, 15);
+
+            // Toggle clavier
+            Rectangle rKbd = {40, screenH - 80, 250, 40};
+            bool hovK = CheckCollisionPointRec(mouse, rKbd);
+            DrawRectangleLinesEx(rKbd, 2, showKeyboard ? vertEclatant : GRAY);
+            DrawText(showKeyboard ? "CLAVIER : ON" : "CLAVIER : OFF",
+                     (int)rKbd.x + 20, (int)rKbd.y + 10, 20,
+                     showKeyboard ? vertEclatant : GRAY);
         } else if (appState == AppState::PLAY) {
             if (!isPaused) {
                 // Zone de défi
@@ -793,99 +820,117 @@ int main(int argc, char* argv[]) {
                           vertEclatant);
 
             // Piano
-            float wW = screenW / 7.0f;
-            float pianoY = screenH * 0.7f;
-            float pianoH = screenH - pianoY;
-            float bW = wW * 0.6f;
+            if (showKeyboard) {
+                int32_t numKeys =
+                    (selectedGame == GameType::GAME_NOTE) ? 7 : 14;
+                int32_t numBlack =
+                    (selectedGame == GameType::GAME_NOTE) ? 5 : 10;
+                float wW = screenW / (float)numKeys;
+                float pianoY = screenH * 0.7f;
+                float pianoH = screenH - pianoY;
+                float bW = wW * 0.6f;
 
-            int hovWhite = -1;
-            int hovBlack = -1;
+                int hovWhite = -1;
+                int hovBlack = -1;
 
-            if (!isPaused && mouse.y > pianoY) {
-                for (int i = 0; i < 5; i++) {
+                if (!isPaused && mouse.y > pianoY) {
+                    for (int i = 0; i < numBlack; i++) {
+                        Rectangle rN = {(blackKeyIndices[i] + 1) * wW -
+                                            bW / 2.0f,
+                                        pianoY, bW, pianoH * 0.6f};
+                        if (CheckCollisionPointRec(mouse, rN)) {
+                            hovBlack = i;
+                            break;
+                        }
+                    }
+                    if (hovBlack == -1) {
+                        hovWhite = (int)(mouse.x / wW);
+                        if (hovWhite < 0 || hovWhite >= numKeys) hovWhite = -1;
+                    }
+                }
+
+                for (int i = 0; i < numKeys; i++) {
+                    Rectangle r = {i * wW, pianoY, wW - 2.0f, pianoH};
+                    // On recrée la note à partir de l'index i
+                    int octave = 4 + (i / 7);
+                    std::string noteName = std::string(1, "cdefgab"[i % 7]) +
+                                           std::to_string(octave);
+                    NoteKey nk = resolveKey(noteName);
+                    bool isExpected = false, isCorrectKey = false,
+                         isWrongKey = false;
+                    if (nk.valid && !nk.isBlack) {
+                        for (const auto& n : currentChallenge.expectedNotes) {
+                            NoteKey ek = resolveKey(n);
+                            if (ek.valid && !ek.isBlack && ek.index == nk.index)
+                                isExpected = true;
+                        }
+                        if (lastResult.active) {
+                            for (const auto& n : lastResult.correct) {
+                                NoteKey ck = resolveKey(n);
+                                if (ck.valid && !ck.isBlack &&
+                                    ck.index == nk.index)
+                                    isCorrectKey = true;
+                            }
+                            for (const auto& n : lastResult.incorrect) {
+                                NoteKey ik = resolveKey(n);
+                                if (ik.valid && !ik.isBlack &&
+                                    ik.index == nk.index)
+                                    isWrongKey = true;
+                            }
+                        }
+                    }
+                    Color keyColor =
+                        isWrongKey            ? rougeErreur
+                        : isCorrectKey        ? vertEclatant
+                        : isExpected          ? orangeNote
+                        : blanchesAppuyees[i] ? profiles[currentUserIdx].color
+                        : (hovWhite == i)
+                            ? Fade(profiles[currentUserIdx].color, 0.3f)
+                            : BLANK;
+                    if (keyColor.a != 0) DrawRectangleRec(r, keyColor);
+                    DrawRectangleLinesEx(r, 2,
+                                         isPaused ? Fade(vertEclatant, 0.2f)
+                                                  : vertEclatant);
+                    if (numKeys <= 7) {
+                        DrawText(nomsNotes[i], (int)r.x + (int)(wW / 2) - 15,
+                                 (int)r.y + (int)pianoH - 30, 18,
+                                 isPaused ? Fade(vertEclatant, 0.2f)
+                                          : (keyColor.a != 0 ? vertFonce
+                                                             : vertEclatant));
+                    }
+                }
+                for (int i = 0; i < numBlack; i++) {
                     Rectangle rN = {(blackKeyIndices[i] + 1) * wW - bW / 2.0f,
                                     pianoY, bW, pianoH * 0.6f};
-                    if (CheckCollisionPointRec(mouse, rN)) {
-                        hovBlack = i;
-                        break;
-                    }
-                }
-                if (hovBlack == -1) {
-                    hovWhite = (int)(mouse.x / wW);
-                    if (hovWhite < 0 || hovWhite >= 7) hovWhite = -1;
-                }
-            }
-
-            for (int i = 0; i < 7; i++) {
-                Rectangle r = {i * wW, pianoY, wW - 2.0f, pianoH};
-                NoteKey nk =
-                    resolveKey(std::string(1, "cdefgab"[i]));
-                bool isExpected = false, isCorrectKey = false,
-                     isWrongKey = false;
-                if (nk.valid && !nk.isBlack) {
-                    for (const auto& n : currentChallenge.expectedNotes) {
-                        NoteKey ek = resolveKey(n);
-                        if (ek.valid && !ek.isBlack && ek.index == nk.index)
-                            isExpected = true;
-                    }
+                    static constexpr char WHITE_LETTERS[7] = {
+                        'c', 'd', 'e', 'f', 'g', 'a', 'b'};
+                    int octave = 4 + (blackKeyIndices[i] / 7);
+                    std::string sharpNote =
+                        std::string(1, WHITE_LETTERS[blackKeyIndices[i] % 7]) +
+                        "#" + std::to_string(octave);
+                    bool bkExpected = false, bkCorrect = false, bkWrong = false;
+                    for (const auto& n : currentChallenge.expectedNotes)
+                        if (noteInList(sharpNote, {n})) bkExpected = true;
                     if (lastResult.active) {
-                        for (const auto& n : lastResult.correct) {
-                            NoteKey ck = resolveKey(n);
-                            if (ck.valid && !ck.isBlack && ck.index == nk.index)
-                                isCorrectKey = true;
-                        }
-                        for (const auto& n : lastResult.incorrect) {
-                            NoteKey ik = resolveKey(n);
-                            if (ik.valid && !ik.isBlack && ik.index == nk.index)
-                                isWrongKey = true;
-                        }
+                        for (const auto& n : lastResult.correct)
+                            if (noteInList(sharpNote, {n})) bkCorrect = true;
+                        for (const auto& n : lastResult.incorrect)
+                            if (noteInList(sharpNote, {n})) bkWrong = true;
                     }
+                    Color bkFill =
+                        bkWrong             ? rougeErreur
+                        : bkCorrect         ? vertEclatant
+                        : bkExpected        ? orangeNote
+                        : noiresAppuyees[i] ? profiles[currentUserIdx].color
+                        : (hovBlack == i)
+                            ? Fade(profiles[currentUserIdx].color, 0.6f)
+                        : isPaused ? Fade(DARKGRAY, 0.5f)
+                                   : Color{30, 60, 30, 255};
+                    DrawRectangleRec(rN, bkFill);
+                    DrawRectangleLinesEx(rN, 2,
+                                         isPaused ? Fade(vertEclatant, 0.2f)
+                                                  : vertEclatant);
                 }
-                Color keyColor = isWrongKey     ? rougeErreur
-                                 : isCorrectKey ? vertEclatant
-                                 : isExpected   ? orangeNote
-                                 : blanchesAppuyees[i]
-                                     ? profiles[currentUserIdx].color
-                                 : (hovWhite == i)
-                                     ? Fade(profiles[currentUserIdx].color, 0.3f)
-                                     : BLANK;
-                if (keyColor.a != 0) DrawRectangleRec(r, keyColor);
-                DrawRectangleLinesEx(
-                    r, 2, isPaused ? Fade(vertEclatant, 0.2f) : vertEclatant);
-                DrawText(nomsNotes[i], (int)r.x + (int)(wW / 2) - 15,
-                         (int)r.y + (int)pianoH - 30, 18,
-                         isPaused
-                             ? Fade(vertEclatant, 0.2f)
-                             : (keyColor.a != 0 ? vertFonce : vertEclatant));
-            }
-            for (int i = 0; i < 5; i++) {
-                Rectangle rN = {(blackKeyIndices[i] + 1) * wW - bW / 2.0f,
-                                pianoY, bW, pianoH * 0.6f};
-                static constexpr char WHITE_LETTERS[7] = {'c', 'd', 'e', 'f',
-                                                          'g', 'a', 'b'};
-                std::string sharpNote =
-                    std::string(1, WHITE_LETTERS[blackKeyIndices[i]]) + "#";
-                bool bkExpected = false, bkCorrect = false, bkWrong = false;
-                for (const auto& n : currentChallenge.expectedNotes)
-                    if (noteInList(sharpNote, {n})) bkExpected = true;
-                if (lastResult.active) {
-                    for (const auto& n : lastResult.correct)
-                        if (noteInList(sharpNote, {n})) bkCorrect = true;
-                    for (const auto& n : lastResult.incorrect)
-                        if (noteInList(sharpNote, {n})) bkWrong = true;
-                }
-                Color bkFill = bkWrong      ? rougeErreur
-                               : bkCorrect  ? vertEclatant
-                               : bkExpected ? orangeNote
-                               : noiresAppuyees[i]
-                                   ? profiles[currentUserIdx].color
-                               : (hovBlack == i)
-                                   ? Fade(profiles[currentUserIdx].color, 0.6f)
-                               : isPaused ? Fade(DARKGRAY, 0.5f)
-                                          : Color{30, 60, 30, 255};
-                DrawRectangleRec(rN, bkFill);
-                DrawRectangleLinesEx(
-                    rN, 2, isPaused ? Fade(vertEclatant, 0.2f) : vertEclatant);
             }
 
             if (isPaused) {
