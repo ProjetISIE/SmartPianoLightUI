@@ -6,16 +6,13 @@
       },
       "locked": {
         "lastModified": 1773709314,
-        "narHash": "sha256-0SaZv/GXZuGCesJ8lqIjh8btu98GTREBPkQdiiT0BtQ=",
-        "owner": "ProjetISIE",
-        "repo": "SmartPianoEngine",
-        "rev": "4ecb48048cce5a171d0dd10ed3cf27e29f82f659",
-        "type": "github"
+        "narHash": "sha256-zsJh3XY0TXDNCEVXvmzgJnlZ4a/hNXACHcrR2vd8OOE=",
+        "type": "tarball",
+        "url": "https://github.com/ProjetISIE/SmartPianoEngine/archive/main.tar.gz"
       },
       "original": {
-        "owner": "ProjetISIE",
-        "repo": "SmartPianoEngine",
-        "type": "github"
+        "type": "tarball",
+        "url": "https://github.com/ProjetISIE/SmartPianoEngine/archive/main.tar.gz"
       }
     },
     "nixpkgs": {
