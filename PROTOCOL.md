@@ -32,7 +32,7 @@ lang: fr
 
 # Protocole Smart Piano
 
-> Version: 1.0.1
+> Version: 1
 
 Smart Piano utilise un protocole texte simple sur Unix Domain Socket (UDS) pour
 la communication entre le moteur de jeu (serveur) et l'interface utilisateur
