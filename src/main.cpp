@@ -417,6 +417,9 @@ int main(int argc, char* argv[]) {
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
         Vector2 mouse = GetMousePosition();
+        Vector2 dpiScale = GetWindowScaleDPI();
+        mouse.x *= dpiScale.x;
+        mouse.y *= dpiScale.y;
         bool clicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
         float screenW = (float)GetScreenWidth();
         float screenH = (float)GetScreenHeight();
