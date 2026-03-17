@@ -264,7 +264,7 @@ int main(int argc, char* argv[]) {
 
     Communication comm;
 
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
     InitWindow(DEFAULT_SCREEN_W, DEFAULT_SCREEN_H, "Smart Piano");
     SetTargetFPS(60);
 
@@ -575,6 +575,7 @@ int main(int argc, char* argv[]) {
                         isPaused = false;
                     if (CheckCollisionPointRec(mouse, btnQuit)) {
                         comm.send(Message("quit"));
+                        comm.clearQueue();
                         engState = EngineState::ENG_CONNECTED;
                         appState = AppState::MENU;
                         isPaused = false;
@@ -582,6 +583,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     if (CheckCollisionPointRec(mouse, btnMenu)) {
                         comm.send(Message("quit"));
+                        comm.clearQueue();
                         engState = EngineState::ENG_CONNECTED;
                         appState = AppState::MENU;
                     }
@@ -634,14 +636,6 @@ int main(int argc, char* argv[]) {
         // ===================================================================
         BeginDrawing();
         ClearBackground(BLACK);
-
-        if (appState != AppState::PROFILE_SELECT) {
-            Color indColor =
-                (engState == EngineState::ENG_DISCONNECTED) ? rougeErreur
-                : (engState == EngineState::ENG_CONNECTED)  ? orEclatant
-                                                            : vertEclatant;
-            DrawCircle(12, 12, 6, indColor);
-        }
 
         if (errorTimer > 0.0f) {
             float alpha = (errorTimer < 1.0f) ? errorTimer : 1.0f;
