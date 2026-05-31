@@ -44,8 +44,9 @@
           smart-piano = mkUi pkgs;
         }
         // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          aarch64-linux-default = mkUi pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
-          aarch64-linux-smart-piano = mkUi pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
+          aarch64-linux-default = mkUi pkgs.pkgsCross.aarch64-multiplatform;
+          aarch64-linux-smart-piano = mkUi pkgs.pkgsCross.aarch64-multiplatform;
+          aarch64-linux-static-smart-piano = mkUi pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
           # containerImage = pkgs.dockerTools.buildImage {
           #   name = "smart-piano-container";
           #   tag = "latest";
