@@ -44,7 +44,7 @@ stdenv.mkDerivation rec {
     libxrandr
   ];
   preConfigure = ''
-    cmakeFlagsArray+=("-DENGINE_PATH=${engine}" "-DCOVERAGE=OFF")
+    cmakeFlagsArray+=("-DENGINE_PATH=${engine}" "-DCOVERAGE=OFF" "-DCMAKE_BUILD_TYPE=Release")
   '';
   installPhase = ''
     runHook preInstall
