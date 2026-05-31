@@ -128,6 +128,9 @@ Pour compiler le projet, il est possible (pour tester) d’utiliser [CMake]
 la solution préconisée (car reproductible) est d’utiliser `nix build` ; ou
 `nix build .#cross` pour compiler en ciblant l’architecture de la Raspberry Pi 4
 (ARM64).
+Une image Podman/Docker ARM64 compatible Raspberry Pi 4 peut être construite
+depuis une machine x86-64 Linux avec
+`nix build .#aarch64-linux-smart-piano-container`.
 
 L’application peut être lancée avec `./result/bin/main`, ou `./build/main` si
 compilé avec [CMake] (ou automatiquement après un build avec

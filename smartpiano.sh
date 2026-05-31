@@ -1,0 +1,20 @@
+xhost +local:podman
+podman run -it --rm --name smartpiano \
+  --device /dev/dri:/dev/dri \
+  --device /dev/snd:/dev/snd \
+  --userns=keep-id \
+  --group-add keep-groups \
+  --workdir /tmp \
+  -v /tmp:/tmp \
+  -v /etc/fonts:/etc/fonts:ro \
+  -v /usr/share/fonts:/usr/share/fonts:ro \
+  -v /var/cache/fontconfig:/var/cache/fontconfig \
+  -v $XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR \
+  -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+  -e HOME=/tmp \
+  -e NO_AT_BRIDGE=1 \
+  -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+  -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+  -e DISPLAY=$DISPLAY \
+  -e XDG_SESSION_TYPE=wayland \
+  smart-piano-ui

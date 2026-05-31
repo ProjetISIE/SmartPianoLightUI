@@ -47,33 +47,15 @@
           aarch64-linux-default = mkUi pkgs.pkgsCross.aarch64-multiplatform;
           aarch64-linux-smart-piano = mkUi pkgs.pkgsCross.aarch64-multiplatform;
           aarch64-linux-static-smart-piano = mkUi pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
-          # containerImage = pkgs.dockerTools.buildImage {
-          #   name = "smart-piano-container";
-          #   tag = "latest";
-          #   copyToRoot = pkgs.buildEnv {
-          #     name = "image-root";
-          #     paths =
-          #       with pkgs;
-          #       [
-          #         bashInteractive
-          #         coreutils
-          #         clang-tools
-          #         cmake
-          #         ninja
-          #         pkg-config
-          #         git
-          #         doctest
-          #         valgrind
-          #         cppcheck
-          #       ]
-          #       ++ (mkUi pkgs).buildInputs
-          #       ++ (mkUi pkgs).nativeBuildInputs;
-          #     pathsToLink = [ "/bin" ];
-          #   };
-          #   config = {
-          #     Cmd = [ "${pkgs.bashInteractive}/bin/bash" ];
-          #   };
-          # };
+          aarch64-linux-smart-piano-container = pkgs.dockerTools.buildLayeredImage {
+            name = "smart-piano-ui";
+            tag = "latest";
+            architecture = "arm64";
+            contents = [ (mkUi pkgs.pkgsCross.aarch64-multiplatform) ];
+            config = {
+              Cmd = [ "/bin/smart-piano-ui" ];
+            };
+          };
         }
       );
       devShells = forSystems (
