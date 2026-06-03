@@ -10,8 +10,12 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_TESTING=OFF \
   -DCMAKE_SYSTEM_NAME=Linux \
   -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-  -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-  -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+  -DCMAKE_C_COMPILER=clang-18 \
+  -DCMAKE_CXX_COMPILER=clang++-18 \
+  -DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu \
+  -DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu \
+  -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
+  -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -static-libstdc++ -lc++abi -fuse-ld=lld-18"
 cmake --build build -j"$(nproc)"
 cmake --install build --prefix /tmp/engine-install
 
@@ -19,13 +23,17 @@ echo "--> Building SmartPianoLightUI..."
 cd /workspace
 
 cmake -B build-cross -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_TESTING=OFF \
   -DENGINE_PATH=/tmp/engine-install \
   -DCMAKE_PREFIX_PATH=/usr/aarch64-linux-gnu \
+  -DBUILD_TESTING=OFF \
   -DCMAKE_SYSTEM_NAME=Linux \
   -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-  -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-  -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+  -DCMAKE_C_COMPILER=clang-18 \
+  -DCMAKE_CXX_COMPILER=clang++-18 \
+  -DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu \
+  -DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu \
+  -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
+  -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -static-libstdc++ -lc++abi -fuse-ld=lld-18"
 cmake --build build-cross -j"$(nproc)"
 
 echo "--> Packaging binaries..."

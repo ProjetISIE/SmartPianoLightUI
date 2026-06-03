@@ -3,29 +3,39 @@ FROM debian:bookworm
 # Enable ARM64 architecture
 RUN dpkg --add-architecture arm64 && apt-get update
 
-# Install build tools, cross-compiler, and certs
+# Install dependencies and keys for LLVM repo
 RUN apt-get install -y --no-install-recommends \
-    build-essential crossbuild-essential-arm64 cmake pkg-config git \
-    ca-certificates
+    wget ca-certificates gnupg software-properties-common \
+    build-essential crossbuild-essential-arm64 cmake pkg-config git
 
-# Install ARM64 dependencies for Raylib (X11, GL, Audio, Wayland) AND the Engine (RtMidi)
+# Add the LLVM 18 APT repository
+RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/llvm.asc && \
+    echo "deb http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm-18 main" > /etc/apt/sources.list.d/llvm.list && \
+    apt-get update
+
+# Install Clang 18 and the ARM64 modern C++ standard libraries (libc++)
+RUN apt-get install -y --no-install-recommends \
+    clang-18 lld-18 libc++-18-dev:arm64 libc++abi-18-dev:arm64
+
+# Install ARM64 dependencies for Raylib and the Engine
 RUN apt-get install -y --no-install-recommends \
     libasound2-dev:arm64 librtmidi-dev:arm64 \
     libx11-dev:arm64 libxrandr-dev:arm64 libxi-dev:arm64 \
     libxcursor-dev:arm64 libxinerama-dev:arm64 libgl1-mesa-dev:arm64 \
     libwayland-dev:arm64 libxkbcommon-dev:arm64
 
-# Setup environment for pkg-config to prevent fetching x86_64 libraries
 ENV PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig
 
-# Cross-compile Raylib statically and install it to the ARM64 sysroot
+# Cross-compile Raylib statically using Clang 18
 RUN git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/raylib && \
     cd /tmp/raylib && \
     cmake -B build -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_SYSTEM_NAME=Linux \
       -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-      -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-      -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+      -DCMAKE_C_COMPILER=clang-18 \
+      -DCMAKE_CXX_COMPILER=clang++-18 \
+      -DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu \
+      -DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu \
       -DBUILD_SHARED_LIBS=OFF && \
     cmake --build build -j"$(nproc)" && \
     cmake --install build --prefix /usr/aarch64-linux-gnu && \
