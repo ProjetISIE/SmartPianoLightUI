@@ -13,8 +13,7 @@ find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 add_compile_options(
-  -Wall -Wextra -Wpedantic -Wshadow
-  "-Wno-#warnings"
+  -Wall -Wextra -Wpedantic -Wshadow "-Wno-#warnings"
   # -Wconversion -Werror
 )
 
@@ -28,9 +27,10 @@ set(PROFRAW_TESTS "tests-%m.profraw")
 set(PROFDATA_FILE "coverage.profdata")
 
 add_subdirectory(src)
+
 if(BUILD_TESTING)
-enable_testing()
-add_subdirectory(test)
+  enable_testing()
+  add_subdirectory(test)
 endif()
 
 # Exécute les exécutables pour générer données de profilage (main.profraw…)
