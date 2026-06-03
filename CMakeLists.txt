@@ -28,8 +28,10 @@ set(PROFRAW_TESTS "tests-%m.profraw")
 set(PROFDATA_FILE "coverage.profdata")
 
 add_subdirectory(src)
+if(BUILD_TESTING)
 enable_testing()
 add_subdirectory(test)
+endif()
 
 # Exécute les exécutables pour générer données de profilage (main.profraw…)
 add_custom_target(

@@ -2,12 +2,12 @@
 set -e
 
 echo "--> Cloning and building SmartPianoEngine..."
-# Clean up previous engine build if it exists in the container's temp space
 rm -rf /tmp/engine /tmp/engine-install
 git clone https://github.com/ProjetISIE/SmartPianoEngine.git /tmp/engine
 cd /tmp/engine
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_TESTING=OFF \
   -DCMAKE_SYSTEM_NAME=Linux \
   -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
   -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
@@ -17,8 +17,11 @@ cmake --install build --prefix /tmp/engine-install
 
 echo "--> Building SmartPianoLightUI..."
 cd /workspace
+
 cmake -B build-cross -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_TESTING=OFF \
   -DENGINE_PATH=/tmp/engine-install \
+  -DCMAKE_PREFIX_PATH=/usr/aarch64-linux-gnu \
   -DCMAKE_SYSTEM_NAME=Linux \
   -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
   -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \

@@ -3,17 +3,32 @@ FROM debian:bookworm
 # Enable ARM64 architecture
 RUN dpkg --add-architecture arm64 && apt-get update
 
-# Install build tools and cross-compiler
+# Install build tools, cross-compiler, and certs
 RUN apt-get install -y --no-install-recommends \
     build-essential crossbuild-essential-arm64 cmake pkg-config git \
     ca-certificates
 
-# Install ARM64 target libraries for Raylib and X11
+# Install ARM64 dependencies for Raylib (X11, GL, Audio, Wayland) AND the Engine (RtMidi)
 RUN apt-get install -y --no-install-recommends \
-    libraylib-dev:arm64 libasound2-dev:arm64 \
+    libasound2-dev:arm64 librtmidi-dev:arm64 \
     libx11-dev:arm64 libxrandr-dev:arm64 libxi-dev:arm64 \
-    libxcursor-dev:arm64 libxinerama-dev:arm64 libgl1-mesa-dev:arm64
+    libxcursor-dev:arm64 libxinerama-dev:arm64 libgl1-mesa-dev:arm64 \
+    libwayland-dev:arm64 libxkbcommon-dev:arm64
 
 # Setup environment for pkg-config to prevent fetching x86_64 libraries
 ENV PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig
+
+# Cross-compile Raylib statically and install it to the ARM64 sysroot
+RUN git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/raylib && \
+    cd /tmp/raylib && \
+    cmake -B build -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_SYSTEM_NAME=Linux \
+      -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+      -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+      -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+      -DBUILD_SHARED_LIBS=OFF && \
+    cmake --build build -j"$(nproc)" && \
+    cmake --install build --prefix /usr/aarch64-linux-gnu && \
+    rm -rf /tmp/raylib
+
 WORKDIR /workspace
