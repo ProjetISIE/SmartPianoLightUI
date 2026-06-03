@@ -22,11 +22,13 @@ RUN apt-get install -y --no-install-recommends \
     libasound2-dev:arm64 \
     libx11-dev:arm64 libxrandr-dev:arm64 libxi-dev:arm64 \
     libxcursor-dev:arm64 libxinerama-dev:arm64 libgl1-mesa-dev:arm64 \
-    libwayland-dev:arm64 libxkbcommon-dev:arm64
+    libwayland-dev:arm64 libxkbcommon-dev:arm64 libdecor-0-dev:arm64 \
+    wayland-protocols libwayland-bin
 
 ENV PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig
 # Tell pkg-config where our custom static libraries will be installed
-ENV PKG_CONFIG_PATH=/usr/aarch64-linux-gnu/lib/pkgconfig:/usr/aarch64-linux-gnu/lib64/pkgconfig:/usr/aarch64-linux-gnu/share/pkgconfig
+# Also include /usr/share/pkgconfig for architecture-independent packages like wayland-protocols
+ENV PKG_CONFIG_PATH=/usr/aarch64-linux-gnu/lib/pkgconfig:/usr/aarch64-linux-gnu/lib64/pkgconfig:/usr/aarch64-linux-gnu/share/pkgconfig:/usr/share/pkgconfig
 
 # Cross-compile Raylib statically using Clang 18
 RUN git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/raylib && \
@@ -38,6 +40,7 @@ RUN git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/
       -DCMAKE_CXX_COMPILER=clang++-18 \
       -DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu \
       -DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu \
+      -DUSE_WAYLAND=ON \
       -DBUILD_SHARED_LIBS=OFF && \
     cmake --build build -j"$(nproc)" && \
     cmake --install build --prefix /usr/aarch64-linux-gnu && \

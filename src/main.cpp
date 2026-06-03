@@ -75,7 +75,8 @@ struct Challenge {
     std::string displayText; ///< Texte affiché (nom note ou accord)
     std::vector<std::string> expectedNotes; ///< Notes à jouer
     bool isChord{false};
-    std::string rawName; ///< Nom brut envoyé par le moteur (ex: "c", "c#", "C maj")
+    std::string
+        rawName; ///< Nom brut envoyé par le moteur (ex: "c", "c#", "C maj")
 };
 
 /// Résultat du dernier challenge
@@ -176,7 +177,8 @@ struct GameStats {
     }
 }
 
-[[nodiscard]] static std::string noteDisplayLabel(const std::string& note, NotationMode mode) {
+[[nodiscard]] static std::string noteDisplayLabel(const std::string& note,
+                                                  NotationMode mode) {
     if (note.empty()) return note;
     if (mode == NotationMode::LETTER) {
         std::string label;
@@ -200,7 +202,8 @@ struct GameStats {
     }
 }
 
-[[nodiscard]] static std::string getNotationLabel(int32_t whiteIdx, NotationMode mode) {
+[[nodiscard]] static std::string getNotationLabel(int32_t whiteIdx,
+                                                  NotationMode mode) {
     static const char* syllabic[] = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI"};
     static const char* letters[] = {"C", "D", "E", "F", "G", "A", "B"};
     if (mode == NotationMode::LETTER) return letters[whiteIdx % 7];
@@ -285,20 +288,23 @@ static void drawStaff(Rectangle rec, const std::vector<std::string>& notes,
         // Ledger lines (lignes supplémentaires)
         if (nk.index <= 0) { // C4 et en dessous
             for (int p = 0; p >= nk.index; p -= 2) {
-                float ly = centerY + (2.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
+                float ly = centerY +
+                           (2.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
                 DrawLineEx({noteX - noteRadius * 1.5f, ly},
                            {noteX + noteRadius * 1.5f, ly}, 2, color);
             }
         } else if (nk.index >= 12) { // A5 et au dessus
             for (int p = 12; p <= nk.index; p += 2) {
-                float ly = centerY + (2.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
+                float ly = centerY +
+                           (2.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
                 DrawLineEx({noteX - noteRadius * 1.5f, ly},
                            {noteX + noteRadius * 1.5f, ly}, 2, color);
             }
         }
 
         // Tête de note (noire/quarter note)
-        DrawEllipse((int)noteX, (int)noteY, noteRadius * 1.2f, noteRadius, color);
+        DrawEllipse((int)noteX, (int)noteY, noteRadius * 1.2f, noteRadius,
+                    color);
 
         // Hampe (stem) - vers le haut si note basse, vers le bas si note haute
         float stemLen = lineSpacing * 3.0f;
@@ -365,6 +371,14 @@ int main(int argc, char* argv[]) {
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
     InitWindow(DEFAULT_SCREEN_W, DEFAULT_SCREEN_H, "Smart Piano");
+    if (!IsWindowReady()) {
+        Logger::err("[Main] Échec initialisation fenêtre (Raylib)");
+        if (enginePid > 0) {
+            kill(enginePid, SIGTERM);
+            waitpid(enginePid, nullptr, 0);
+        }
+        return 1;
+    }
     SetTargetFPS(60);
 
     const Color vertFonce = {20, 40, 20, 255};
@@ -469,7 +483,8 @@ int main(int argc, char* argv[]) {
                         msg.hasField("id") ? std::stoi(msg.getField("id")) : 0;
                     std::string noteName = msg.getField("note");
                     currentChallenge.rawName = noteName;
-                    currentChallenge.displayText = noteDisplayLabel(noteName, selectedNotation);
+                    currentChallenge.displayText =
+                        noteDisplayLabel(noteName, selectedNotation);
                     currentChallenge.expectedNotes = {noteName};
                     currentChallenge.isChord = false;
                     engState = EngineState::ENG_PLAYING;
@@ -888,9 +903,11 @@ int main(int argc, char* argv[]) {
             // Toggle notation
             Rectangle rNotation = {screenW - 290, screenH - 80, 250, 40};
             const char* notationText =
-                selectedNotation == NotationMode::SYLLABIC ? "NOTATION : DO RE MI"
-                : selectedNotation == NotationMode::LETTER ? "NOTATION : A B C"
-                                                           : "NOTATION : PORTEE";
+                selectedNotation == NotationMode::SYLLABIC
+                    ? "NOTATION : DO RE MI"
+                : selectedNotation == NotationMode::LETTER
+                    ? "NOTATION : A B C"
+                    : "NOTATION : PORTEE";
             DrawRectangleLinesEx(rNotation, 2, vertEclatant);
             DrawText(notationText, (int)rNotation.x + 20, (int)rNotation.y + 10,
                      20, vertEclatant);
@@ -901,8 +918,10 @@ int main(int argc, char* argv[]) {
                                    350.0f, 200.0f};
                 DrawRectangleLinesEx(rChal, 3, vertEclatant);
 
-                if (selectedNotation == NotationMode::STAFF && !currentChallenge.expectedNotes.empty()) {
-                    drawStaff(rChal, currentChallenge.expectedNotes, vertEclatant);
+                if (selectedNotation == NotationMode::STAFF &&
+                    !currentChallenge.expectedNotes.empty()) {
+                    drawStaff(rChal, currentChallenge.expectedNotes,
+                              vertEclatant);
                 } else {
                     std::string display;
                     if (currentChallenge.expectedNotes.empty()) {
@@ -910,12 +929,15 @@ int main(int argc, char* argv[]) {
                     } else if (currentChallenge.isChord) {
                         display = currentChallenge.displayText;
                     } else {
-                        display = noteDisplayLabel(currentChallenge.expectedNotes[0], selectedNotation);
+                        display =
+                            noteDisplayLabel(currentChallenge.expectedNotes[0],
+                                             selectedNotation);
                     }
                     const char* chalTxt = display.c_str();
                     int txtSize = (int)display.size() > 8 ? 28 : 36;
                     DrawText(chalTxt,
-                             (int)screenW / 2 - MeasureText(chalTxt, txtSize) / 2,
+                             (int)screenW / 2 -
+                                 MeasureText(chalTxt, txtSize) / 2,
                              (int)rChal.y + 80, txtSize, vertEclatant);
                 }
 
@@ -1018,8 +1040,11 @@ int main(int argc, char* argv[]) {
                                          isPaused ? Fade(vertEclatant, 0.2f)
                                                   : vertEclatant);
                     if (numKeys <= 7) {
-                        std::string label = getNotationLabel(i, selectedNotation);
-                        DrawText(label.c_str(), (int)r.x + (int)(wW / 2) - MeasureText(label.c_str(), 18) / 2,
+                        std::string label =
+                            getNotationLabel(i, selectedNotation);
+                        DrawText(label.c_str(),
+                                 (int)r.x + (int)(wW / 2) -
+                                     MeasureText(label.c_str(), 18) / 2,
                                  (int)r.y + (int)pianoH - 30, 18,
                                  isPaused ? Fade(vertEclatant, 0.2f)
                                           : (keyColor.a != 0 ? vertFonce
@@ -1072,7 +1097,8 @@ int main(int argc, char* argv[]) {
                                        screenH / 2.0f - 50.0f, 300.0f, 60.0f};
                 Rectangle btnQuit = {screenW / 2.0f - 150.0f,
                                      screenH / 2.0f + 30.0f, 300.0f, 60.0f};
-                (void)drawButton(btnResume, "REPRENDRE", vertEclatant, mouse, 25);
+                (void)drawButton(btnResume, "REPRENDRE", vertEclatant, mouse,
+                                 25);
                 (void)drawButton(btnQuit, "QUITTER", rougeErreur, mouse, 25);
             }
         } else if (appState == AppState::GAME_OVER) {
@@ -1099,7 +1125,8 @@ int main(int argc, char* argv[]) {
                 vertEclatant);
             Rectangle btnBack = {screenW / 2.0f - 150.0f, screenH * 0.7f,
                                  300.0f, 55.0f};
-            (void)drawButton(btnBack, "RETOUR AU MENU", vertEclatant, mouse, 22);
+            (void)drawButton(btnBack, "RETOUR AU MENU", vertEclatant, mouse,
+                             22);
         }
 
         EndDrawing();
