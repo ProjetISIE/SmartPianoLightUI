@@ -48,6 +48,7 @@ log*.txt
 
 # Generated build files
 build/
+build-cross/
 Makefile*
 moc_*
 release/

@@ -19,12 +19,14 @@ RUN apt-get install -y --no-install-recommends \
 
 # Install ARM64 dependencies for Raylib and the Engine
 RUN apt-get install -y --no-install-recommends \
-    libasound2-dev:arm64 librtmidi-dev:arm64 \
+    libasound2-dev:arm64 \
     libx11-dev:arm64 libxrandr-dev:arm64 libxi-dev:arm64 \
     libxcursor-dev:arm64 libxinerama-dev:arm64 libgl1-mesa-dev:arm64 \
     libwayland-dev:arm64 libxkbcommon-dev:arm64
 
 ENV PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig
+# Tell pkg-config where our custom static libraries will be installed
+ENV PKG_CONFIG_PATH=/usr/aarch64-linux-gnu/lib/pkgconfig:/usr/aarch64-linux-gnu/lib64/pkgconfig:/usr/aarch64-linux-gnu/share/pkgconfig
 
 # Cross-compile Raylib statically using Clang 18
 RUN git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/raylib && \
@@ -40,5 +42,22 @@ RUN git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/
     cmake --build build -j"$(nproc)" && \
     cmake --install build --prefix /usr/aarch64-linux-gnu && \
     rm -rf /tmp/raylib
+
+# Cross-compile RtMidi statically using Clang 18 and libc++
+RUN git clone --depth 1 --branch 5.0.0 https://github.com/thestk/rtmidi.git /tmp/rtmidi && \
+    cd /tmp/rtmidi && \
+    cmake -B build -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_SYSTEM_NAME=Linux \
+      -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+      -DCMAKE_C_COMPILER=clang-18 \
+      -DCMAKE_CXX_COMPILER=clang++-18 \
+      -DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu \
+      -DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu \
+      -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DRTMIDI_BUILD_TESTING=OFF && \
+    cmake --build build -j"$(nproc)" && \
+    cmake --install build --prefix /usr/aarch64-linux-gnu && \
+    rm -rf /tmp/rtmidi
 
 WORKDIR /workspace

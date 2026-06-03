@@ -15,7 +15,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu \
   -DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu \
   -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
-  -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -static-libstdc++ -lc++abi -fuse-ld=lld-18"
+  -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -static-libstdc++ -lc++abi -fuse-ld=lld-18 -lasound -lpthread"
 cmake --build build -j"$(nproc)"
 cmake --install build --prefix /tmp/engine-install
 
@@ -33,11 +33,7 @@ cmake -B build-cross -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu \
   -DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu \
   -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
-  -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -static-libstdc++ -lc++abi -fuse-ld=lld-18"
+  -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -static-libstdc++ -lc++abi -fuse-ld=lld-18 -lasound -lpthread" \
+  -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH \
+  -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH
 cmake --build build-cross -j"$(nproc)"
-
-echo "--> Packaging binaries..."
-mkdir -p deploy
-cp build-cross/main deploy/smart-piano-ui
-cp /tmp/engine-install/bin/engine deploy/engine
-chmod +x deploy/smart-piano-ui deploy/engine
