@@ -25,13 +25,22 @@ class Logger {
      */
     [[nodiscard]] static std::string time() {
         try {
+#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
             return std::format("{:%T}", std::chrono::zoned_time{
                                             std::chrono::current_zone(),
                                             std::chrono::system_clock::now()});
+#else
+            // Robust POSIX fallback keeping local time rather than epoch
+            // seconds
+            auto now = std::chrono::system_clock::to_time_t(
+                std::chrono::system_clock::now());
+            std::tm tm_buf;
+            localtime_r(&now, &tm_buf);
+            return std::format("{:02}:{:02}:{:02}", tm_buf.tm_hour,
+                               tm_buf.tm_min, tm_buf.tm_sec);
+#endif
         } catch (...) {
-            auto secs = std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::system_clock::now().time_since_epoch());
-            return std::format("{}", secs);
+            return "00:00:00";
         }
     }
 
@@ -41,9 +50,20 @@ class Logger {
      */
     [[nodiscard]] static std::string date() {
         try {
+#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
             return std::format("{:%F}", std::chrono::zoned_time{
                                             std::chrono::current_zone(),
                                             std::chrono::system_clock::now()});
+#else
+            // Robust POSIX fallback for compilers lacking C++20 timezone
+            // support
+            auto now = std::chrono::system_clock::to_time_t(
+                std::chrono::system_clock::now());
+            std::tm tm_buf;
+            localtime_r(&now, &tm_buf);
+            return std::format("{:04}-{:02}-{:02}", tm_buf.tm_year + 1900,
+                               tm_buf.tm_mon + 1, tm_buf.tm_mday);
+#endif
         } catch (...) {
             return "1970-01-01";
         }
