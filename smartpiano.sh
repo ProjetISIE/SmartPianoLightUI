@@ -1,4 +1,3 @@
-xhost +local:podman
 podman run -it --rm --name smartpiano \
   --device /dev/dri:/dev/dri \
   --device /dev/snd:/dev/snd \
