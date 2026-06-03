@@ -10,6 +10,8 @@ podman run -it --rm --name smartpiano \
   -v /var/cache/fontconfig:/var/cache/fontconfig \
   -v $XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR \
   -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+  -v /usr/lib/aarch64-linux-gnu/dri:/usr/lib/aarch64-linux-gnu/dri:ro \
+  -e LIBGL_DRIVERS_PATH=/usr/lib/aarch64-linux-gnu/dri \
   -e HOME=/tmp \
   -e NO_AT_BRIDGE=1 \
   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
