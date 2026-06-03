@@ -46,16 +46,6 @@
         // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
           aarch64-linux-default = mkUi pkgs.pkgsCross.aarch64-multiplatform;
           aarch64-linux-smart-piano = mkUi pkgs.pkgsCross.aarch64-multiplatform;
-          aarch64-linux-static-smart-piano = mkUi pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
-          aarch64-linux-smart-piano-container = pkgs.dockerTools.buildLayeredImage {
-            name = "smart-piano-ui";
-            tag = "latest";
-            architecture = "arm64";
-            contents = [ (mkUi pkgs.pkgsCross.aarch64-multiplatform) ];
-            config = {
-              Cmd = [ "/bin/smart-piano-ui" ];
-            };
-          };
         }
       );
       devShells = forSystems (
@@ -78,7 +68,7 @@
                     clang-tools # Clang CLIs, including LSP
                     cmake-format # CMake formatter
                     cmake-language-server # Cmake LSP
-                    doctest # Testing framework (for local -DBUILD_TESTING=ON builds)
+                    doctest # Testing framework (-DBUILD_TESTING=ON builds)
                     doxygen # Documentation generator
                     lldb # Clang debug adapter
                   ]
@@ -93,9 +83,6 @@
                   ];
                 inputsFrom = [ defaultPkg ];
                 shellHook = ''
-                  # export XDG_SESSION_TYPE=wayland
-                  # export SDL_VIDEODRIVER=wayland 
-                  # export _JAVA_AWT_WM_NONREPARENTING=1
                   export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath defaultPkg.buildInputs}:$LD_LIBRARY_PATH"
                   cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Debug \
                     -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON # -S .
