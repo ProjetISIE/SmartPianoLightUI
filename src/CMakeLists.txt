@@ -17,7 +17,8 @@ add_executable(main main.cpp Communication.cpp)
 target_include_directories(
   main
   PUBLIC ${CMAKE_SOURCE_DIR}/include
-  PUBLIC ${ENGINE_INCLUDE_DIR})
+  PUBLIC ${ENGINE_INCLUDE_DIR}
+  PUBLIC /usr/aarch64-linux-gnu/include)
 
 # Chemin du binaire moteur passé par ui.nix via -DENGINE_PATH=…
 if(DEFINED ENGINE_PATH)

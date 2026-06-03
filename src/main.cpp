@@ -1,6 +1,7 @@
 #include "Communication.hpp"
 #include "Logger.hpp"
 #include "raylib.h"
+#include <GLFW/glfw3.h>
 #include <csignal>
 #include <cstdint>
 #include <cstring>
@@ -370,7 +371,13 @@ int main(int argc, char* argv[]) {
     Communication comm;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
+    // Request OpenGL ES 2.0 for ARM Wayland/EGL compatibility
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+
     InitWindow(DEFAULT_SCREEN_W, DEFAULT_SCREEN_H, "Smart Piano");
+
     if (!IsWindowReady()) {
         Logger::err("[Main] Échec initialisation fenêtre (Raylib)");
         if (enginePid > 0) {
