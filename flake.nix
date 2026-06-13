@@ -6,7 +6,7 @@
   };
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    engine.url = "https://github.com/ProjetISIE/SmartPianoEngine/archive/main.tar.gz";
+    engine.url = "git+file:///Users/jiselefankam/Desktop/Projet%20piano/SmartPianoEngine";
   };
   outputs =
     {
