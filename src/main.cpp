@@ -961,7 +961,7 @@ int main(int argc, char* argv[]) {
                 menuNotesStr +=
                     " " + noteDisplayLabel(menuNotes[idx], selectedNotation);
                 if (idx + 1 < menuNotes.size()) {
-                    menuNotesStr += "  •";
+                    menuNotesStr += "   ";
                 }
             }
             DrawText(menuNotesStr.c_str(),
@@ -1056,10 +1056,10 @@ int main(int argc, char* argv[]) {
                     screenW / 2.0f - (7.0f * boxW + 6.0f * spacing) / 2.0f;
                 float startY = rChal.y + rChal.height + 42.0f;
 
-                for (int i = 0; i < 7; i++) {
-                    std::string scaleNote = scaleNotes[i];
-                    Rectangle boxRec = {startX + i * (boxW + spacing), startY,
-                                        boxW, boxH};
+                for (size_t i = 0; i < scaleNotes.size() && i < 7; ++i) {
+                    const std::string& scaleNote = scaleNotes[i];
+                    Rectangle boxRec = {startX + (float)i * (boxW + spacing),
+                                        startY, boxW, boxH};
 
                     // Check if note is expected in the current challenge
                     bool isExpected = false;

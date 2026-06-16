@@ -26,7 +26,7 @@ if(DEFINED ENGINE_PATH)
     main PRIVATE ENGINE_BIN_PATH="${ENGINE_PATH}/bin/engine")
 endif()
 
-target_link_libraries(main ${ENGINE_LIBRARY} raylib glfw)
+target_link_libraries(main ${ENGINE_LIBRARY} raylib)
 if(UNIX AND NOT APPLE)
   target_link_libraries(main m pthread dl rt X11)
 endif()
