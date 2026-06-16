@@ -100,7 +100,7 @@ void Communication::send(const Message& msg) {
     if (::write(this->sockFd, data.c_str(), data.length()) < 0) {
         Logger::log("[Comm] Échec écriture socket.");
         this->disconnect();
-    } else Logger::log("[Comm] Envoyé: {}", msg.getType());
+    }
 }
 
 std::optional<Message> Communication::popMessage() {
@@ -138,7 +138,6 @@ void Communication::listen() {
                     std::lock_guard<std::mutex> lock(this->queueMutex);
                     this->messageQueue.push(msg);
                 }
-                Logger::log("[Comm] Reçu: {}", msg.getType());
 
                 currentMessageData.erase(0, endOfMessagePos + 2);
             }

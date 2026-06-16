@@ -13,10 +13,12 @@
 
 class Logger {
   private:
-    static inline std::string logFilePath{"smartpiano.log"}; ///< Log standard
-    static inline std::string errFilePath{"smartpiano.err.log"}; ///< Erreurs
+    static inline std::string logFilePath{
+        "smartpiano.ui.log"}; ///< Log standard
+    static inline std::string errFilePath{"smartpiano.ui.err.log"}; ///< Erreurs
     static inline std::mutex logMutex; ///< Mutex accès thread-safe
     static constexpr uint64_t MAX_LOG_SIZE{2 * 1024 * 1024}; ///< Maxi (2 Mo)
+    static inline bool verboseMode{false};                   ///< Mode verbeux
 
   private:
     /**
@@ -89,10 +91,13 @@ class Logger {
      */
     static void writeLog(const std::string& message, std::string& path) {
         std::lock_guard<std::mutex> lock(logMutex);
-        if (std::filesystem::exists(path) &&
-            std::filesystem::is_regular_file(path) &&
-            std::filesystem::file_size(path) > MAX_LOG_SIZE)
-            rotateLog(path); // Rotation des logs si nécessaire
+        static int writeCount = 0;
+        if (++writeCount % 100 == 0) {
+            if (std::filesystem::exists(path) &&
+                std::filesystem::is_regular_file(path) &&
+                std::filesystem::file_size(path) > MAX_LOG_SIZE)
+                rotateLog(path); // Rotation des logs si nécessaire
+        }
         // Écrit message dans fichier et dans sortie appropriés
         std::ofstream file(path, std::ios::app);
         if (file.is_open()) {
@@ -151,6 +156,32 @@ class Logger {
     static void err(std::format_string<Args...> fmt, Args&&... args) {
         writeLog(std::format(fmt, std::forward<Args>(args)...),
                  Logger::errFilePath);
+    }
+
+    /**
+     * @brief Active ou désactive le mode verbeux
+     * @param enable true pour activer
+     */
+    static void setVerbose(bool enable) { verboseMode = enable; }
+
+    /**
+     * @brief Indique si le mode verbeux est activé
+     * @return true si activé
+     */
+    [[nodiscard]] static bool isVerbose() { return verboseMode; }
+
+    /**
+     * @brief Écrit un message de débogage si le mode verbeux est activé
+     * @tparam Args Types des arguments de formatage
+     * @param fmt Chaîne de formatage
+     * @param args Arguments de formatage
+     */
+    template <typename... Args>
+    static void debug(std::format_string<Args...> fmt, Args&&... args) {
+        if (verboseMode) {
+            writeLog(std::format(fmt, std::forward<Args>(args)...),
+                     Logger::logFilePath);
+        }
     }
 };
 
