@@ -96,7 +96,7 @@ class Logger {
         // Écrit message dans fichier et dans sortie appropriés
         std::ofstream file(path, std::ios::app);
         if (file.is_open()) {
-            file << std::format("[{} {}] {}\n", date(), time(), message);
+            std::println(file, "[{} {}] {}", date(), time(), message);
             std::println(stdout, "{}", message);
         } else {
             std::println(stderr, "[Logger] Impossible d'écrire dans fichier");
