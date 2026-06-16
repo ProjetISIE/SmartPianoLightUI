@@ -414,6 +414,7 @@ static void drawStaff(Rectangle rec, const std::vector<std::string>& notes,
 int main(int argc, char* argv[]) {
     int timeoutMs = -1;
     bool verbose = false;
+    bool fullscreen = (std::getenv("WAYLAND_DISPLAY") != nullptr);
     for (int i = 1; i < argc; i++) {
         if (std::strcmp(argv[i], "--timeout") == 0 && i + 1 < argc) {
             timeoutMs = std::stoi(argv[i + 1]);
@@ -421,6 +422,12 @@ int main(int argc, char* argv[]) {
         } else if (std::strcmp(argv[i], "--verbose") == 0 ||
                    std::strcmp(argv[i], "-v") == 0) {
             verbose = true;
+        } else if (std::strcmp(argv[i], "--fullscreen") == 0 ||
+                   std::strcmp(argv[i], "-f") == 0) {
+            fullscreen = true;
+        } else if (std::strcmp(argv[i], "--windowed") == 0 ||
+                   std::strcmp(argv[i], "-w") == 0) {
+            fullscreen = false;
         }
     }
 
@@ -445,6 +452,10 @@ int main(int argc, char* argv[]) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     InitWindow(DEFAULT_SCREEN_W, DEFAULT_SCREEN_H, "Smart Piano");
+
+    if (fullscreen) {
+        ToggleFullscreen();
+    }
 
     if (!IsWindowReady()) {
         Logger::err("[Main] Échec initialisation fenêtre (Raylib)");
