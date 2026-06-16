@@ -1,11 +1,29 @@
 #include "Communication.hpp"
 #include "Logger.hpp"
+#include <cerrno>
 #include <format>
 #include <sstream>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <thread>
 #include <unistd.h>
+
+namespace {
+[[nodiscard]] bool writeAll(int32_t fd, const std::string& data) {
+    size_t totalWritten = 0;
+    while (totalWritten < data.size()) {
+        ssize_t written = ::write(fd, data.data() + totalWritten,
+                                  data.size() - totalWritten);
+        if (written > 0) {
+            totalWritten += static_cast<size_t>(written);
+            continue;
+        }
+        if (written < 0 && errno == EINTR) continue;
+        return false;
+    }
+    return true;
+}
+} // namespace
 
 std::string serialize(const Message& msg) {
     std::string result = std::format("{}\n", msg.getType());
@@ -97,7 +115,7 @@ void Communication::send(const Message& msg) {
         return;
     }
     std::string data = serialize(msg);
-    if (::write(this->sockFd, data.c_str(), data.length()) < 0) {
+    if (!writeAll(this->sockFd, data)) {
         Logger::log("[Comm] Échec écriture socket.");
         this->disconnect();
     } else Logger::log("[Comm] Envoyé: {}", msg.getType());
