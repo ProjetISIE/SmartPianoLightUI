@@ -145,11 +145,17 @@ struct GameStats {
 }
 
 /// Lance le moteur en arrière-plan ; retourne son PID ou -1
-[[nodiscard]] static pid_t spawnEngine(const std::string& enginePath) {
+[[nodiscard]] static pid_t spawnEngine(const std::string& enginePath,
+                                       bool verbose) {
     pid_t pid = fork();
     if (pid == 0) {
-        execl(enginePath.c_str(), "engine", nullptr);
-        execlp("engine", "engine", nullptr);
+        if (verbose) {
+            execl(enginePath.c_str(), "engine", "--verbose", nullptr);
+            execlp("engine", "engine", "--verbose", nullptr);
+        } else {
+            execl(enginePath.c_str(), "engine", nullptr);
+            execlp("engine", "engine", nullptr);
+        }
         _exit(1);
     }
     if (pid > 0) Logger::log("[Main] Moteur démarré (PID {})", pid);
@@ -407,21 +413,26 @@ static void drawStaff(Rectangle rec, const std::vector<std::string>& notes,
 
 int main(int argc, char* argv[]) {
     int timeoutMs = -1;
+    bool verbose = false;
     for (int i = 1; i < argc; i++) {
         if (std::strcmp(argv[i], "--timeout") == 0 && i + 1 < argc) {
             timeoutMs = std::stoi(argv[i + 1]);
             ++i;
+        } else if (std::strcmp(argv[i], "--verbose") == 0 ||
+                   std::strcmp(argv[i], "-v") == 0) {
+            verbose = true;
         }
     }
 
     Logger::init();
+    Logger::setVerbose(verbose);
     Logger::log("[Main] Démarrage Smart Piano UI");
 
     std::string enginePath = findEngineBinary();
     Logger::log("[Main] Chemin moteur: {}", enginePath);
     pid_t enginePid = -1;
     if (!enginePath.empty() && enginePath[0] == '/') {
-        enginePid = spawnEngine(enginePath);
+        enginePid = spawnEngine(enginePath, verbose);
         usleep(500'000);
     }
 
