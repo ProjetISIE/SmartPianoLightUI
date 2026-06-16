@@ -211,36 +211,38 @@ struct GameStats {
     return syllabic[whiteIdx % 7];
 }
 
-[[nodiscard]] static std::vector<std::string> getScaleNotesList(ScaleChoice scale, ModeChoice mode) {
+[[nodiscard]] static std::vector<std::string>
+getScaleNotesList(ScaleChoice scale, ModeChoice mode) {
     int s = static_cast<int>(scale);
     bool isMaj = (mode == ModeChoice::MODE_MAJ);
     if (isMaj) {
         switch (s) {
-            case 0: return {"c", "d", "e", "f", "g", "a", "b"};
-            case 1: return {"d", "e", "f#", "g", "a", "b", "c#"};
-            case 2: return {"e", "f#", "g#", "a", "b", "c#", "d#"};
-            case 3: return {"f", "g", "a", "bb", "c", "d", "e"};
-            case 4: return {"g", "a", "b", "c", "d", "e", "f#"};
-            case 5: return {"a", "b", "c#", "d", "e", "f#", "g#"};
-            case 6: return {"b", "c#", "d#", "e", "f#", "g#", "a#"};
-            default: break;
+        case 0: return {"c", "d", "e", "f", "g", "a", "b"};
+        case 1: return {"d", "e", "f#", "g", "a", "b", "c#"};
+        case 2: return {"e", "f#", "g#", "a", "b", "c#", "d#"};
+        case 3: return {"f", "g", "a", "bb", "c", "d", "e"};
+        case 4: return {"g", "a", "b", "c", "d", "e", "f#"};
+        case 5: return {"a", "b", "c#", "d", "e", "f#", "g#"};
+        case 6: return {"b", "c#", "d#", "e", "f#", "g#", "a#"};
+        default: break;
         }
     } else {
         switch (s) {
-            case 0: return {"c", "d", "eb", "f", "g", "ab", "bb"};
-            case 1: return {"d", "e", "f", "g", "a", "bb", "c"};
-            case 2: return {"e", "f#", "g", "a", "b", "c", "d"};
-            case 3: return {"f", "g", "ab", "bb", "c", "db", "eb"};
-            case 4: return {"g", "a", "bb", "c", "d", "eb", "f"};
-            case 5: return {"a", "b", "c", "d", "e", "f", "g"};
-            case 6: return {"b", "c#", "d", "e", "f#", "g", "a"};
-            default: break;
+        case 0: return {"c", "d", "eb", "f", "g", "ab", "bb"};
+        case 1: return {"d", "e", "f", "g", "a", "bb", "c"};
+        case 2: return {"e", "f#", "g", "a", "b", "c", "d"};
+        case 3: return {"f", "g", "ab", "bb", "c", "db", "eb"};
+        case 4: return {"g", "a", "bb", "c", "d", "eb", "f"};
+        case 5: return {"a", "b", "c", "d", "e", "f", "g"};
+        case 6: return {"b", "c#", "d", "e", "f#", "g", "a"};
+        default: break;
         }
     }
     return {};
 }
 
-[[nodiscard]] static bool isSameNoteClass(const std::string& a, const std::string& b) {
+[[nodiscard]] static bool isSameNoteClass(const std::string& a,
+                                          const std::string& b) {
     auto clean = [](const std::string& s) {
         std::string r;
         for (char c : s) {
@@ -253,11 +255,14 @@ struct GameStats {
     return clean(a) == clean(b);
 }
 
-[[nodiscard]] static std::string getScaleNameFormatted(ScaleChoice scale, ModeChoice mode, NotationMode notation) {
+[[nodiscard]] static std::string getScaleNameFormatted(ScaleChoice scale,
+                                                       ModeChoice mode,
+                                                       NotationMode notation) {
     static const char* syllabic[] = {"Do", "Re", "Mi", "Fa", "Sol", "La", "Si"};
     static const char* letters[] = {"C", "D", "E", "F", "G", "A", "B"};
     int s = static_cast<int>(scale);
-    std::string name = (notation == NotationMode::LETTER) ? letters[s % 7] : syllabic[s % 7];
+    std::string name =
+        (notation == NotationMode::LETTER) ? letters[s % 7] : syllabic[s % 7];
     name += " ";
     name += (mode == ModeChoice::MODE_MAJ) ? "Majeur" : "Mineur";
     return name;
@@ -949,16 +954,19 @@ int main(int argc, char* argv[]) {
             }
 
             // Affichage interactif des notes de la gamme dans le menu
-            std::vector<std::string> menuNotes = getScaleNotesList(selectedScale, selectedMode);
+            std::vector<std::string> menuNotes =
+                getScaleNotesList(selectedScale, selectedMode);
             std::string menuNotesStr = "Notes de la gamme :";
             for (size_t idx = 0; idx < menuNotes.size(); ++idx) {
-                menuNotesStr += " " + noteDisplayLabel(menuNotes[idx], selectedNotation);
+                menuNotesStr +=
+                    " " + noteDisplayLabel(menuNotes[idx], selectedNotation);
                 if (idx + 1 < menuNotes.size()) {
                     menuNotesStr += "  •";
                 }
             }
             DrawText(menuNotesStr.c_str(),
-                     (int)screenW / 2 - MeasureText(menuNotesStr.c_str(), 18) / 2,
+                     (int)screenW / 2 -
+                         MeasureText(menuNotesStr.c_str(), 18) / 2,
                      (int)(screenH * 0.81f), 18, Fade(vertEclatant, 0.8f));
 
             Rectangle btnBack = {screenW / 2.0f - 150.0f, screenH * 0.92f,
@@ -1029,19 +1037,29 @@ int main(int argc, char* argv[]) {
                 }
 
                 // Affichage interactif des notes de la gamme active en jeu
-                std::vector<std::string> scaleNotes = getScaleNotesList(selectedScale, selectedMode);
-                std::string scaleNameStr = "Gamme active : " + getScaleNameFormatted(selectedScale, selectedMode, selectedNotation);
-                DrawText(scaleNameStr.c_str(), (int)screenW / 2 - MeasureText(scaleNameStr.c_str(), 18) / 2, (int)(rChal.y + rChal.height + 15), 18, Fade(vertEclatant, 0.7f));
+                std::vector<std::string> scaleNotes =
+                    getScaleNotesList(selectedScale, selectedMode);
+                std::string scaleNameStr =
+                    "Gamme active : " + getScaleNameFormatted(selectedScale,
+                                                              selectedMode,
+                                                              selectedNotation);
+                DrawText(scaleNameStr.c_str(),
+                         (int)screenW / 2 -
+                             MeasureText(scaleNameStr.c_str(), 18) / 2,
+                         (int)(rChal.y + rChal.height + 15), 18,
+                         Fade(vertEclatant, 0.7f));
 
                 float boxW = 50.0f;
                 float boxH = 40.0f;
                 float spacing = 12.0f;
-                float startX = screenW / 2.0f - (7.0f * boxW + 6.0f * spacing) / 2.0f;
+                float startX =
+                    screenW / 2.0f - (7.0f * boxW + 6.0f * spacing) / 2.0f;
                 float startY = rChal.y + rChal.height + 42.0f;
 
                 for (int i = 0; i < 7; i++) {
                     std::string scaleNote = scaleNotes[i];
-                    Rectangle boxRec = {startX + i * (boxW + spacing), startY, boxW, boxH};
+                    Rectangle boxRec = {startX + i * (boxW + spacing), startY,
+                                        boxW, boxH};
 
                     // Check if note is expected in the current challenge
                     bool isExpected = false;
@@ -1052,7 +1070,8 @@ int main(int argc, char* argv[]) {
                         }
                     }
 
-                    // Check if note is part of the last result correct/incorrect
+                    // Check if note is part of the last result
+                    // correct/incorrect
                     bool isCorrect = false;
                     bool isIncorrect = false;
                     if (lastResult.active) {
@@ -1073,23 +1092,32 @@ int main(int argc, char* argv[]) {
                     // Check if note is currently pressed on virtual keyboard
                     bool isPressed = false;
                     if (showKeyboard) {
-                        int32_t numKeys = (selectedGame == GameType::GAME_NOTE) ? 7 : 14;
+                        int32_t numKeys =
+                            (selectedGame == GameType::GAME_NOTE) ? 7 : 14;
                         for (int k = 0; k < numKeys; k++) {
                             if (blanchesAppuyees[k]) {
                                 int octave = 4 + (k / 7);
-                                std::string noteName = std::string(1, "cdefgab"[k % 7]) + std::to_string(octave);
+                                std::string noteName =
+                                    std::string(1, "cdefgab"[k % 7]) +
+                                    std::to_string(octave);
                                 if (isSameNoteClass(noteName, scaleNote)) {
                                     isPressed = true;
                                     break;
                                 }
                             }
                         }
-                        int32_t numBlack = (selectedGame == GameType::GAME_NOTE) ? 5 : 10;
+                        int32_t numBlack =
+                            (selectedGame == GameType::GAME_NOTE) ? 5 : 10;
                         for (int k = 0; k < numBlack; k++) {
                             if (noiresAppuyees[k]) {
-                                static constexpr char WHITE_LETTERS[7] = {'c', 'd', 'e', 'f', 'g', 'a', 'b'};
+                                static constexpr char WHITE_LETTERS[7] = {
+                                    'c', 'd', 'e', 'f', 'g', 'a', 'b'};
                                 int octave = 4 + (blackKeyIndices[k] / 7);
-                                std::string sharpNote = std::string(1, WHITE_LETTERS[blackKeyIndices[k] % 7]) + "#" + std::to_string(octave);
+                                std::string sharpNote =
+                                    std::string(
+                                        1,
+                                        WHITE_LETTERS[blackKeyIndices[k] % 7]) +
+                                    "#" + std::to_string(octave);
                                 if (isSameNoteClass(sharpNote, scaleNote)) {
                                     isPressed = true;
                                     break;
@@ -1127,11 +1155,13 @@ int main(int argc, char* argv[]) {
                     DrawRectangleRec(boxRec, fillCol);
                     DrawRectangleLinesEx(boxRec, hov ? 3 : 2, borderCol);
 
-                    std::string dispLabel = noteDisplayLabel(scaleNote, selectedNotation);
+                    std::string dispLabel =
+                        noteDisplayLabel(scaleNote, selectedNotation);
                     int fontSz = (dispLabel.size() > 2) ? 14 : 18;
-                    DrawText(dispLabel.c_str(), 
-                             (int)(boxRec.x + boxRec.width / 2 - MeasureText(dispLabel.c_str(), fontSz) / 2),
-                             (int)(boxRec.y + boxRec.height / 2 - fontSz / 2), 
+                    DrawText(dispLabel.c_str(),
+                             (int)(boxRec.x + boxRec.width / 2 -
+                                   MeasureText(dispLabel.c_str(), fontSz) / 2),
+                             (int)(boxRec.y + boxRec.height / 2 - fontSz / 2),
                              fontSz, textCol);
                 }
             }
