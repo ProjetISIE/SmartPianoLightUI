@@ -528,8 +528,7 @@ int main(int argc, char* argv[]) {
     std::vector<UserProfile> profiles{{"Utilisateur", 0, SKYBLUE}};
     int currentUserIdx = 0;
     bool isNamingProfile = false;
-    char inputName[11] = "\0";
-    int letterCount = 0;
+    std::string inputName;
 
     AppState appState = AppState::PROFILE_SELECT;
     bool isPaused = false;
@@ -715,24 +714,26 @@ int main(int argc, char* argv[]) {
             if (isNamingProfile) {
                 int key = GetCharPressed();
                 while (key > 0) {
-                    if (key >= 32 && key <= 125 && letterCount < 10) {
-                        inputName[letterCount++] = (char)key;
-                        inputName[letterCount] = '\0';
+                    if (key >= 32 && key <= 125 && inputName.length() < 10) {
+                        inputName += static_cast<char>(key);
                     }
                     key = GetCharPressed();
                 }
-                if (IsKeyPressed(KEY_BACKSPACE) && letterCount > 0)
-                    inputName[--letterCount] = '\0';
-                if (IsKeyPressed(KEY_ENTER) && letterCount > 0) {
+                if (IsKeyPressed(KEY_BACKSPACE) && !inputName.empty()) {
+                    inputName.pop_back();
+                }
+                if (IsKeyPressed(KEY_ENTER) && !inputName.empty()) {
                     Color c = {(unsigned char)GetRandomValue(100, 255),
                                (unsigned char)GetRandomValue(100, 255),
                                (unsigned char)GetRandomValue(100, 255), 255};
                     profiles.push_back({inputName, 0, c});
                     isNamingProfile = false;
-                    inputName[0] = '\0';
-                    letterCount = 0;
+                    inputName.clear();
                 }
-                if (IsKeyPressed(KEY_ESCAPE)) isNamingProfile = false;
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    isNamingProfile = false;
+                    inputName.clear();
+                }
             } else if (clicked) {
                 float totalW =
                     profiles.size() * 200.0f +
@@ -969,8 +970,9 @@ int main(int argc, char* argv[]) {
                               Fade(BLACK, 0.8f));
                 DrawText("NOM DU NOUVEAU PROFIL :", (int)screenW / 2 - 140,
                          (int)screenH / 2 - 50, 20, vertEclatant);
-                DrawText(inputName,
-                         (int)screenW / 2 - MeasureText(inputName, 40) / 2,
+                DrawText(inputName.c_str(),
+                         (int)screenW / 2 -
+                             MeasureText(inputName.c_str(), 40) / 2,
                          (int)screenH / 2, 40, WHITE);
                 DrawText("ESC pour annuler", (int)screenW / 2 - 70,
                          (int)screenH / 2 + 60, 15, GRAY);

@@ -1,5 +1,5 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef CODE_UI_INCLUDE_LOGGER_HPP_
+#define CODE_UI_INCLUDE_LOGGER_HPP_
 
 #include <chrono>
 #include <cstdint>
@@ -10,15 +10,17 @@
 #include <mutex>
 #include <print>
 #include <string>
+#include <system_error>
 
 class Logger {
   private:
-    static inline std::string logFilePath{
+    static inline std::string logFilePath_{
         "smartpiano.ui.log"}; ///< Log standard
-    static inline std::string errFilePath{"smartpiano.ui.err.log"}; ///< Erreurs
-    static inline std::mutex logMutex; ///< Mutex accès thread-safe
-    static constexpr uint64_t MAX_LOG_SIZE{2 * 1024 * 1024}; ///< Maxi (2 Mo)
-    static inline bool verboseMode{false};                   ///< Mode verbeux
+    static inline std::string errFilePath_{
+        "smartpiano.ui.err.log"};       ///< Erreurs
+    static inline std::mutex logMutex_; ///< Mutex accès thread-safe
+    static constexpr uint64_t kMaxLogSize{2 * 1024 * 1024}; ///< Maxi (2 Mo)
+    static inline bool verboseMode_{false};                 ///< Mode verbeux
 
   private:
     /**
@@ -36,7 +38,7 @@ class Logger {
             // seconds
             auto now = std::chrono::system_clock::to_time_t(
                 std::chrono::system_clock::now());
-            std::tm tm_buf;
+            std::tm tm_buf{};
             localtime_r(&now, &tm_buf);
             return std::format("{:02}:{:02}:{:02}", tm_buf.tm_hour,
                                tm_buf.tm_min, tm_buf.tm_sec);
@@ -61,7 +63,7 @@ class Logger {
             // support
             auto now = std::chrono::system_clock::to_time_t(
                 std::chrono::system_clock::now());
-            std::tm tm_buf;
+            std::tm tm_buf{};
             localtime_r(&now, &tm_buf);
             return std::format("{:04}-{:02}-{:02}", tm_buf.tm_year + 1900,
                                tm_buf.tm_mon + 1, tm_buf.tm_mday);
@@ -76,33 +78,41 @@ class Logger {
      * @param filePath Chemin du fichier à faire tourner
      */
     static void rotateLog(const std::string& filePath) {
-        // Renomme fichier actuel comme sauvegarde
-        std::filesystem::rename(filePath, date() + filePath);
+        std::error_code ec;
+        // Renomme fichier actuel comme sauvegarde avec un underscore séparateur
+        std::filesystem::rename(filePath, date() + "_" + filePath, ec);
+        if (ec) {
+            std::println(stderr, "[Logger] Échec rotation pour {} : {}",
+                         filePath, ec.message());
+        }
         // Crée nouveau fichier vide
         std::ofstream newFile(filePath, std::ios::trunc);
-        if (!newFile.is_open())
+        if (!newFile.is_open()) {
             std::println(stderr, "[Logger] Impossible de recréer fichier");
+        }
     }
 
     /**
      * @brief Écrit un message dans le fichier de log approprié
      * @param message Message à écrire
-     * @param isError true pour log d'erreurs, false pour log standard
+     * @param path Chemin du fichier de log
      */
     static void writeLog(const std::string& message, std::string& path) {
-        std::lock_guard<std::mutex> lock(logMutex);
+        std::lock_guard<std::mutex> lock(logMutex_);
         static int writeCount = 0;
         if (++writeCount % 100 == 0) {
-            if (std::filesystem::exists(path) &&
-                std::filesystem::is_regular_file(path) &&
-                std::filesystem::file_size(path) > MAX_LOG_SIZE)
+            std::error_code ec;
+            if (std::filesystem::exists(path, ec) &&
+                std::filesystem::is_regular_file(path, ec) &&
+                std::filesystem::file_size(path, ec) > kMaxLogSize) {
                 rotateLog(path); // Rotation des logs si nécessaire
+            }
         }
         // Écrit message dans fichier et dans sortie appropriés
         std::ofstream file(path, std::ios::app);
         if (file.is_open()) {
-            std::println(file, "[{} {}] {}", date(), time(), message);
-            std::println(stdout, "{}", message);
+            file << std::format("[{} {}] {}\n", date(), time(), message);
+            std::println("{}", message);
         } else {
             std::println(stderr, "[Logger] Impossible d'écrire dans fichier");
             std::println(stderr, "{}", message);
@@ -110,17 +120,20 @@ class Logger {
     }
 
   public:
+    Logger() = delete; ///< Prevent instantiation of static utility class
+
     /**
      * @brief Initialise le mutex et vérifie que les fichiers peuvent être créés
      */
     static void init() {
-        std::lock_guard<std::mutex> lock(logMutex);
+        std::lock_guard<std::mutex> lock(logMutex_);
         // Vérifie que les fichiers peuvent être créés
-        std::ofstream basicFile(Logger::logFilePath, std::ios::app);
-        std::ofstream errorFile(Logger::errFilePath, std::ios::app);
-        if (!basicFile.is_open() || !errorFile.is_open())
+        std::ofstream basicFile(Logger::logFilePath_, std::ios::app);
+        std::ofstream errorFile(Logger::errFilePath_, std::ios::app);
+        if (!basicFile.is_open() || !errorFile.is_open()) {
             std::println(stderr,
                          "[Logger] Impossible de créer les fichiers de log");
+        }
     }
 
     /**
@@ -129,8 +142,8 @@ class Logger {
      * @param errPath Chemin du fichier de log d'erreurs
      */
     static void init(const std::string& logPath, const std::string& errPath) {
-        Logger::logFilePath = logPath;
-        Logger::errFilePath = errPath;
+        Logger::logFilePath_ = logPath;
+        Logger::errFilePath_ = errPath;
         Logger::init();
     }
 
@@ -143,7 +156,7 @@ class Logger {
     template <typename... Args>
     static void log(std::format_string<Args...> fmt, Args&&... args) {
         writeLog(std::format(fmt, std::forward<Args>(args)...),
-                 Logger::logFilePath);
+                 Logger::logFilePath_);
     }
 
     /**
@@ -155,20 +168,20 @@ class Logger {
     template <typename... Args>
     static void err(std::format_string<Args...> fmt, Args&&... args) {
         writeLog(std::format(fmt, std::forward<Args>(args)...),
-                 Logger::errFilePath);
+                 Logger::errFilePath_);
     }
 
     /**
      * @brief Active ou désactive le mode verbeux
      * @param enable true pour activer
      */
-    static void setVerbose(bool enable) { verboseMode = enable; }
+    static void setVerbose(bool enable) { verboseMode_ = enable; }
 
     /**
      * @brief Indique si le mode verbeux est activé
      * @return true si activé
      */
-    [[nodiscard]] static bool isVerbose() { return verboseMode; }
+    [[nodiscard]] static bool isVerbose() { return verboseMode_; }
 
     /**
      * @brief Écrit un message de débogage si le mode verbeux est activé
@@ -178,11 +191,11 @@ class Logger {
      */
     template <typename... Args>
     static void debug(std::format_string<Args...> fmt, Args&&... args) {
-        if (verboseMode) {
+        if (verboseMode_) {
             writeLog(std::format(fmt, std::forward<Args>(args)...),
-                     Logger::logFilePath);
+                     Logger::logFilePath_);
         }
     }
 };
 
-#endif // LOGGER_H
+#endif // CODE_UI_INCLUDE_LOGGER_HPP_

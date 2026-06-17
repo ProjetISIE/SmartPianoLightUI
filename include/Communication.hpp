@@ -1,5 +1,5 @@
-#ifndef COMMUNICATION_HPP
-#define COMMUNICATION_HPP
+#ifndef CODE_UI_INCLUDE_COMMUNICATION_HPP_
+#define CODE_UI_INCLUDE_COMMUNICATION_HPP_
 
 #include "Message.hpp"
 #include <atomic>
@@ -8,6 +8,7 @@
 #include <optional>
 #include <queue>
 #include <string>
+#include <string_view>
 #include <thread>
 
 /**
@@ -22,7 +23,7 @@
  * @param data Données brutes reçues du socket
  * @return Message parsé
  */
-[[nodiscard]] Message deserialize(const std::string& data);
+[[nodiscard]] Message deserialize(std::string_view data);
 
 /**
  * @brief Gère la communication client avec le moteur de jeu via Unix Domain
@@ -33,15 +34,15 @@
  */
 class Communication {
   private:
-    std::string socketPath; ///< Chemin du socket Unix
-    int32_t sockFd{-1};     ///< Descripteur de fichier du socket
-    std::atomic<bool> running{
-        false};                 ///< Indique si le thread d'écoute doit tourner
-    std::thread listenerThread; ///< Thread qui écoute les messages entrants
+    std::string socketPath_; ///< Chemin du socket Unix
+    int32_t sockFd_{-1};     ///< Descripteur de fichier du socket
+    std::atomic<bool> running_{
+        false};                  ///< Indique si le thread d'écoute doit tourner
+    std::thread listenerThread_; ///< Thread qui écoute les messages entrants
 
     std::queue<Message>
-        messageQueue; ///< File d'attente thread-safe pour les messages reçus
-    std::mutex queueMutex; ///< Mutex pour protéger l'accès à la file
+        messageQueue_; ///< File d'attente thread-safe pour les messages reçus
+    std::mutex queueMutex_; ///< Mutex pour protéger l'accès à la file
 
   private:
     /**
@@ -63,6 +64,13 @@ class Communication {
      * @brief Destructeur, assure une déconnexion propre
      */
     ~Communication();
+
+    // Enforce thread safety and logical ownership by deleting copy & move
+    // operations
+    Communication(const Communication&) = delete;
+    Communication& operator=(const Communication&) = delete;
+    Communication(Communication&&) = delete;
+    Communication& operator=(Communication&&) = delete;
 
     /**
      * @brief Tente de se connecter au socket du moteur
@@ -100,4 +108,4 @@ class Communication {
     void clearQueue();
 };
 
-#endif // COMMUNICATION_HPP
+#endif // CODE_UI_INCLUDE_COMMUNICATION_HPP_
