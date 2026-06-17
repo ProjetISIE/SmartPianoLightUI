@@ -8,6 +8,7 @@ cd /tmp/engine
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_TESTING=OFF \
+  -DCOVERAGE=OFF \
   -DCMAKE_SYSTEM_NAME=Linux \
   -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
   -DCMAKE_C_COMPILER=clang-18 \
@@ -35,6 +36,7 @@ cmake -B build-cross -DCMAKE_BUILD_TYPE=Release \
   -DENGINE_LIBRARY=/tmp/engine-install/lib/libenginecomm.a \
   -DCMAKE_PREFIX_PATH=/usr/aarch64-linux-gnu \
   -DBUILD_TESTING=OFF \
+  -DCOVERAGE=OFF \
   -DCMAKE_SYSTEM_NAME=Linux \
   -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
   -DCMAKE_C_COMPILER=clang-18 \
