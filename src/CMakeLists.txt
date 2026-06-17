@@ -13,7 +13,7 @@ find_library(
   HINTS "${ENGINE_PATH}/lib" REQUIRED
   NO_CMAKE_FIND_ROOT_PATH)
 
-add_executable(main main.cpp Communication.cpp)
+add_executable(main main.cpp Communication.cpp MusicUtils.cpp UI.cpp AppController.cpp)
 
 target_include_directories(
   main

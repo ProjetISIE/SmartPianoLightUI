@@ -6,7 +6,7 @@ target_include_directories(LoggerTest PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(LoggerTest PRIVATE doctest::doctest)
 add_test(NAME LoggerTest COMMAND LoggerTest)
 
-add_executable(integrationTest integrationTest.cpp ../src/Communication.cpp)
+add_executable(integrationTest integrationTest.cpp ../src/Communication.cpp ../src/MusicUtils.cpp)
 target_include_directories(integrationTest PRIVATE ${CMAKE_SOURCE_DIR}/include ${ENGINE_INCLUDE_DIR})
 target_link_libraries(integrationTest PRIVATE doctest::doctest ${ENGINE_LIBRARY})
 add_test(NAME integrationTest COMMAND integrationTest)
