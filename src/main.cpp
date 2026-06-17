@@ -309,7 +309,26 @@ struct NoteKey {
     bool valid{false};
 };
 
-[[nodiscard]] static NoteKey resolveKey(const std::string& note) {
+static int32_t
+getChallengeBaseOctave(const std::vector<std::string>& expectedNotes) {
+    if (expectedNotes.empty()) return 4;
+    int32_t minOctave = 9;
+    for (const auto& note : expectedNotes) {
+        if (note.empty()) continue;
+        char lastChar = note.back();
+        if (std::isdigit(lastChar)) {
+            int32_t oct = lastChar - '0';
+            if (oct < minOctave) {
+                minOctave = oct;
+            }
+        }
+    }
+    if (minOctave == 9) return 4;
+    return minOctave;
+}
+
+[[nodiscard]] static NoteKey resolveKey(const std::string& note,
+                                        int32_t baseKeyboardOctave = 4) {
     if (note.empty()) return {};
     char letter = note[0];
     size_t i = 1;
@@ -328,19 +347,24 @@ struct NoteKey {
     if (letter < 'a' || letter > 'g') return {};
     int32_t whiteIdx = WHITE_MAP[static_cast<int>(letter - 'a')];
 
-    // On décale selon l'octave (on supporte octave 4 et 5 pour le 2-octaves)
-    // On normalise : octave 4 -> base 0, octave 5 -> base 7
-    int32_t baseIdx = (octave - 4) * 7;
+    // On décale selon l'octave par rapport à l'octave de base du clavier
+    int32_t baseIdx = (octave - baseKeyboardOctave) * 7;
     whiteIdx += baseIdx;
 
-    if (mod.empty()) return {false, whiteIdx, true};
+    int32_t octaveOffset = 0;
+    if (whiteIdx < 0) {
+        octaveOffset = (whiteIdx - 6) / 7;
+        whiteIdx -= octaveOffset * 7;
+    }
+
+    if (mod.empty()) return {false, whiteIdx + octaveOffset * 7, true};
 
     static const int32_t WHITE_TO_BLACK_PER_OCTAVE[7] = {0, 1, -1, 2, 3, 4, -1};
     int32_t localWhiteIdx = whiteIdx % 7;
     int32_t bkLocal = WHITE_TO_BLACK_PER_OCTAVE[localWhiteIdx];
     if (bkLocal < 0) return {};
 
-    int32_t bkIdx = (whiteIdx / 7) * 5 + bkLocal;
+    int32_t bkIdx = (whiteIdx / 7) * 5 + bkLocal + octaveOffset * 5;
     return {true, bkIdx, true};
 }
 
@@ -1143,11 +1167,13 @@ int main(int argc, char* argv[]) {
                     // Check if note is currently pressed on virtual keyboard
                     bool isPressed = false;
                     if (showKeyboard) {
+                        int32_t baseKeyboardOctave = getChallengeBaseOctave(
+                            currentChallenge.expectedNotes);
                         int32_t numKeys =
                             (selectedGame == GameType::GAME_NOTE) ? 7 : 14;
                         for (int k = 0; k < numKeys; k++) {
                             if (blanchesAppuyees[k]) {
-                                int octave = 4 + (k / 7);
+                                int octave = baseKeyboardOctave + (k / 7);
                                 std::string noteName =
                                     std::string(1, "cdefgab"[k % 7]) +
                                     std::to_string(octave);
@@ -1163,7 +1189,8 @@ int main(int argc, char* argv[]) {
                             if (noiresAppuyees[k]) {
                                 static constexpr char WHITE_LETTERS[7] = {
                                     'c', 'd', 'e', 'f', 'g', 'a', 'b'};
-                                int octave = 4 + (blackKeyIndices[k] / 7);
+                                int octave = baseKeyboardOctave +
+                                             (blackKeyIndices[k] / 7);
                                 std::string sharpNote =
                                     std::string(
                                         1,
@@ -1229,6 +1256,8 @@ int main(int argc, char* argv[]) {
 
             // Piano
             if (showKeyboard) {
+                int32_t baseKeyboardOctave =
+                    getChallengeBaseOctave(currentChallenge.expectedNotes);
                 int32_t numKeys =
                     (selectedGame == GameType::GAME_NOTE) ? 7 : 14;
                 int32_t numBlack =
@@ -1260,27 +1289,27 @@ int main(int argc, char* argv[]) {
                 for (int i = 0; i < numKeys; i++) {
                     Rectangle r = {i * wW, pianoY, wW - 2.0f, pianoH};
                     // On recrée la note à partir de l'index i
-                    int octave = 4 + (i / 7);
+                    int octave = baseKeyboardOctave + (i / 7);
                     std::string noteName = std::string(1, "cdefgab"[i % 7]) +
                                            std::to_string(octave);
-                    NoteKey nk = resolveKey(noteName);
+                    NoteKey nk = resolveKey(noteName, baseKeyboardOctave);
                     bool isExpected = false, isCorrectKey = false,
                          isWrongKey = false;
                     if (nk.valid && !nk.isBlack) {
                         for (const auto& n : currentChallenge.expectedNotes) {
-                            NoteKey ek = resolveKey(n);
+                            NoteKey ek = resolveKey(n, baseKeyboardOctave);
                             if (ek.valid && !ek.isBlack && ek.index == nk.index)
                                 isExpected = true;
                         }
                         if (lastResult.active) {
                             for (const auto& n : lastResult.correct) {
-                                NoteKey ck = resolveKey(n);
+                                NoteKey ck = resolveKey(n, baseKeyboardOctave);
                                 if (ck.valid && !ck.isBlack &&
                                     ck.index == nk.index)
                                     isCorrectKey = true;
                             }
                             for (const auto& n : lastResult.incorrect) {
-                                NoteKey ik = resolveKey(n);
+                                NoteKey ik = resolveKey(n, baseKeyboardOctave);
                                 if (ik.valid && !ik.isBlack &&
                                     ik.index == nk.index)
                                     isWrongKey = true;
@@ -1316,7 +1345,7 @@ int main(int argc, char* argv[]) {
                                     pianoY, bW, pianoH * 0.6f};
                     static constexpr char WHITE_LETTERS[7] = {
                         'c', 'd', 'e', 'f', 'g', 'a', 'b'};
-                    int octave = 4 + (blackKeyIndices[i] / 7);
+                    int octave = baseKeyboardOctave + (blackKeyIndices[i] / 7);
                     std::string sharpNote =
                         std::string(1, WHITE_LETTERS[blackKeyIndices[i] % 7]) +
                         "#" + std::to_string(octave);
