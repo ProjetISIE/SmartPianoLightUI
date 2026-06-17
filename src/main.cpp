@@ -209,6 +209,35 @@ struct GameStats {
     }
 }
 
+[[nodiscard]] static std::string chordDisplayLabel(const std::string& chordName,
+                                                   NotationMode mode) {
+    if (chordName.empty()) return chordName;
+    if (mode == NotationMode::LETTER) {
+        return chordName;
+    }
+    size_t rootLen = 1;
+    if (chordName.size() > 1 && (chordName[1] == '#' || chordName[1] == 'b')) {
+        rootLen = 2;
+    }
+    std::string rootPart = chordName.substr(0, rootLen);
+    std::string restPart = chordName.substr(rootLen);
+
+    std::string frenchRoot = noteLetterToFrench(rootPart[0]);
+    if (frenchRoot == "DO") frenchRoot = "Do";
+    else if (frenchRoot == "RE") frenchRoot = "Ré";
+    else if (frenchRoot == "MI") frenchRoot = "Mi";
+    else if (frenchRoot == "FA") frenchRoot = "Fa";
+    else if (frenchRoot == "SOL") frenchRoot = "Sol";
+    else if (frenchRoot == "LA") frenchRoot = "La";
+    else if (frenchRoot == "SI") frenchRoot = "Si";
+
+    if (rootLen > 1) {
+        frenchRoot += rootPart[1];
+    }
+
+    return frenchRoot + restPart;
+}
+
 [[nodiscard]] static std::string getNotationLabel(int32_t whiteIdx,
                                                   NotationMode mode) {
     static const char* syllabic[] = {"DO", "RE", "MI", "FA", "SOL", "LA", "SI"};
@@ -577,7 +606,8 @@ int main(int argc, char* argv[]) {
                     currentChallenge.id =
                         msg.hasField("id") ? std::stoi(msg.getField("id")) : 0;
                     currentChallenge.rawName = msg.getField("name");
-                    currentChallenge.displayText = currentChallenge.rawName;
+                    currentChallenge.displayText = chordDisplayLabel(
+                        currentChallenge.rawName, selectedNotation);
                     currentChallenge.expectedNotes =
                         splitNotes(msg.getField("notes"));
                     currentChallenge.isChord = true;
