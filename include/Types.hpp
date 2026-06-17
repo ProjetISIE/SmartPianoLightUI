@@ -5,6 +5,14 @@
 #include <string>
 #include <vector>
 
+namespace Colors {
+inline constexpr Color kVertFonce = {20, 40, 20, 255};
+inline constexpr Color kVertEclatant = {100, 255, 100, 255};
+inline constexpr Color kOrEclatant = {255, 215, 0, 255};
+inline constexpr Color kRougeErreur = {230, 41, 55, 255};
+inline constexpr Color kOrangeNote = {255, 140, 0, 255};
+} // namespace Colors
+
 /// États de l'application
 enum class AppState { PROFILE_SELECT, MENU, PLAY, GAME_OVER };
 

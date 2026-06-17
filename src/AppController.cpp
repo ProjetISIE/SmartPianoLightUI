@@ -221,15 +221,15 @@ void AppController::processIncomingMessages() {
 
             if (isCorrect) {
                 feedbackMsg_ = encouragements[GetRandomValue(0, 3)];
-                feedbackColor_ = kOrEclatant;
+                feedbackColor_ = Colors::kOrEclatant;
                 scoreActuel_ += 10;
             } else if (isPartial) {
                 feedbackMsg_ = consolations[GetRandomValue(0, 3)];
-                feedbackColor_ = kOrangeNote;
+                feedbackColor_ = Colors::kOrangeNote;
                 scoreActuel_ += 5;
             } else {
                 feedbackMsg_ = consolations[GetRandomValue(0, 3)];
-                feedbackColor_ = kRougeErreur;
+                feedbackColor_ = Colors::kRougeErreur;
             }
             feedbackAlpha_ = 1.0f;
             engState_ = EngineState::ENG_PLAYED;
@@ -263,7 +263,7 @@ void AppController::processIncomingMessages() {
     }
 }
 
-void AppController::updateLogic(float dt, Vector2 mouse, bool clicked,
+void AppController::updateLogic(float /*dt*/, Vector2 mouse, bool clicked,
                                 float screenW, float screenH) {
     if (appState_ == AppState::PROFILE_SELECT) {
         if (isNamingProfile_) {

@@ -3,13 +3,7 @@
 #include "MusicUtils.hpp"
 #include <format>
 
-namespace {
-constexpr Color kVertFonce = {20, 40, 20, 255};
-constexpr Color kVertEclatant = {100, 255, 100, 255};
-constexpr Color kOrEclatant = {255, 215, 0, 255};
-constexpr Color kRougeErreur = {230, 41, 55, 255};
-constexpr Color kOrangeNote = {255, 140, 0, 255};
-} // namespace
+using namespace Colors;
 
 void UI::draw(AppController& app, Vector2 mouse, float screenW, float screenH) {
     if (app.errorTimer_ > 0.0f) {
@@ -219,7 +213,7 @@ void UI::drawMenu(AppController& app, Vector2 mouse, float screenW,
     std::string menuNotesStr = "Notes de la gamme :";
     for (size_t idx = 0; idx < menuNotes.size(); ++idx) {
         menuNotesStr += " " + MusicUtils::noteDisplayLabel(
-                                  menuNotes[idx], app.selectedNotation);
+                                  menuNotes[idx], app.selectedNotation_);
         if (idx + 1 < menuNotes.size()) {
             menuNotesStr += "   ";
         }
