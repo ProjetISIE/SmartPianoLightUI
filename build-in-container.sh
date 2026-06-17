@@ -49,4 +49,4 @@ echo "--> Packaging binaries..."
 mkdir -p deploy
 cp build-cross/src/main deploy/smart-piano-ui
 cp /tmp/engine-install/bin/engine deploy/engine
-chmod +x deploy/smart-piano-ui deploy/engine
+chmod 777 deploy/smart-piano-ui deploy/engine
