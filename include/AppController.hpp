@@ -34,7 +34,8 @@ class AppController {
     bool isPaused_{false};
     ScaleChoice selectedScale_{ScaleChoice::SCALE_C};
     ModeChoice selectedMode_{ModeChoice::MODE_MAJ};
-    GameType selectedGame_{GameType::GAME_NOTE};
+    std::string selectedGameId_;
+    std::vector<GameInfo> availableGames_;
     int32_t scoreActuel_{0};
     NotationMode selectedNotation_{NotationMode::SYLLABIC};
     bool showKeyboard_{true};
@@ -92,8 +93,9 @@ class AppController {
                      float screenH);
     void handleVirtualKeyboardInput(float pianoY, Vector2 mouse, float screenW,
                                     float screenH);
-    void startGame(GameType gt);
+    void startGame(const std::string& gtId);
     void quitGame();
+    [[nodiscard]] int32_t getSelectedGameKeys() const;
 
     [[nodiscard]] std::string findEngineBinary();
     [[nodiscard]] pid_t spawnEngine(const std::string& enginePath);

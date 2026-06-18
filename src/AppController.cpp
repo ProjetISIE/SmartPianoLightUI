@@ -117,6 +117,7 @@ void AppController::run() {
         if (engState_ != EngineState::ENG_DISCONNECTED &&
             !comm_.isConnected()) {
             engState_ = EngineState::ENG_DISCONNECTED;
+            availableGames_.clear();
             if (appState_ == AppState::PLAY ||
                 appState_ == AppState::GAME_OVER) {
                 appState_ = AppState::MENU;
@@ -151,6 +152,7 @@ void AppController::cleanup() {
         comm_.send(Message("quit"));
     }
     comm_.disconnect();
+    availableGames_.clear();
 
     // Check if window was initialized to avoid crash on close
     if (IsWindowReady()) {
@@ -181,6 +183,10 @@ void AppController::processIncomingMessages() {
                 errorTimer_ = 5.0f;
                 appState_ = AppState::MENU;
             }
+        } else if (type == "gametype") {
+            availableGames_.push_back(
+                {msg.getField("id"), msg.getField("name"),
+                 msg.hasField("keys") ? std::stoi(msg.getField("keys")) : 7});
         } else if (type == "note") {
             currentChallenge_.id =
                 msg.hasField("id") ? std::stoi(msg.getField("id")) : 0;
@@ -351,11 +357,11 @@ void AppController::updateLogic(float /*dt*/, Vector2 mouse, bool clicked,
             }
 
             // Clics sur les modes de jeu
-            for (int i = 0; i < 3; i++) {
+            for (size_t i = 0; i < availableGames_.size(); i++) {
                 Rectangle r = {screenW / 2.0f - 250.0f,
                                screenH * 0.3f + i * 100.0f, 500.0f, 80.0f};
                 if (CheckCollisionPointRec(mouse, r)) {
-                    startGame(static_cast<GameType>(i));
+                    startGame(availableGames_[i].id);
                 }
             }
 
@@ -425,8 +431,8 @@ void AppController::handleVirtualKeyboardInput(float pianoY, Vector2 mouse,
     for (auto& b : blanchesAppuyees_) b = false;
     for (auto& b : noiresAppuyees_) b = false;
 
-    int32_t numKeys = (selectedGame_ == GameType::GAME_NOTE) ? 7 : 14;
-    int32_t numBlack = (selectedGame_ == GameType::GAME_NOTE) ? 5 : 10;
+    int32_t numKeys = getSelectedGameKeys();
+    int32_t numBlack = (numKeys / 7) * 5;
     float wW = screenW / (float)numKeys;
     float bW = wW * 0.6f;
 
@@ -450,13 +456,20 @@ void AppController::handleVirtualKeyboardInput(float pianoY, Vector2 mouse,
     }
 }
 
-void AppController::startGame(GameType gt) {
+int32_t AppController::getSelectedGameKeys() const {
+    for (const auto& g : availableGames_) {
+        if (g.id == selectedGameId_) return g.keys;
+    }
+    return 7;
+}
+
+void AppController::startGame(const std::string& gtId) {
     if (engState_ == EngineState::ENG_DISCONNECTED) {
         errorMsg_ = "Moteur non connecté";
         errorTimer_ = 3.0f;
         return;
     }
-    selectedGame_ = gt;
+    selectedGameId_ = gtId;
     scoreActuel_ = 0;
     currentChallenge_ = {};
     lastResult_ = {};
@@ -466,9 +479,7 @@ void AppController::startGame(GameType gt) {
     static const char* scaleStr[] = {"c", "d", "e", "f", "g", "a", "b"};
     comm_.send(Message(
         "config",
-        {{"game", gt == GameType::GAME_NOTE    ? "note"
-                  : gt == GameType::GAME_CHORD ? "chord"
-                                               : "inversed"},
+        {{"game", gtId},
          {"scale", scaleStr[static_cast<int>(selectedScale_)]},
          {"mode", selectedMode_ == ModeChoice::MODE_MAJ ? "maj" : "min"}}));
 }

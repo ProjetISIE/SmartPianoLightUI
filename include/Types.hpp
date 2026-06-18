@@ -42,8 +42,11 @@ enum class ModeChoice { MODE_MAJ, MODE_MIN };
 /// Type de notation
 enum class NotationMode { SYLLABIC, LETTER, STAFF };
 
-/// Type de jeu
-enum class GameType { GAME_NOTE, GAME_CHORD, GAME_INVERSED };
+struct GameInfo {
+    std::string id;
+    std::string name;
+    int32_t keys;
+};
 
 struct UserProfile {
     std::string name;

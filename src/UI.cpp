@@ -166,12 +166,11 @@ void UI::drawMenu(AppController& app, Vector2 mouse, float screenW,
             .c_str(),
         (int)screenW - 200, 40, 25, kVertEclatant);
 
-    const char* gameTitles[] = {"JEU DE NOTES", "JEU D'ACCORDS",
-                                "JEU D'ACCORDS RENVERSES"};
-    for (int i = 0; i < 3; i++) {
+    for (size_t i = 0; i < app.availableGames_.size(); i++) {
         Rectangle r = {screenW / 2.0f - 250.0f, screenH * 0.3f + i * 100.0f,
                        500.0f, 80.0f};
-        (void)drawButton(r, gameTitles[i], kVertEclatant, mouse, 25);
+        (void)drawButton(r, app.availableGames_[i].name.c_str(), kVertEclatant,
+                         mouse, 25);
     }
 
     // Gamme
@@ -344,8 +343,7 @@ void UI::drawPlay(AppController& app, Vector2 mouse, float screenW,
             if (app.showKeyboard_) {
                 int32_t baseKeyboardOctave = MusicUtils::getChallengeBaseOctave(
                     app.currentChallenge_.expectedNotes);
-                int32_t numKeys =
-                    (app.selectedGame_ == GameType::GAME_NOTE) ? 7 : 14;
+                int32_t numKeys = app.getSelectedGameKeys();
                 for (int k = 0; k < numKeys; k++) {
                     if (app.blanchesAppuyees_[k]) {
                         int octave = baseKeyboardOctave + (k / 7);
@@ -358,8 +356,7 @@ void UI::drawPlay(AppController& app, Vector2 mouse, float screenW,
                         }
                     }
                 }
-                int32_t numBlack =
-                    (app.selectedGame_ == GameType::GAME_NOTE) ? 5 : 10;
+                int32_t numBlack = (numKeys / 7) * 5;
                 for (int k = 0; k < numBlack; k++) {
                     if (app.noiresAppuyees_[k]) {
                         static constexpr char WHITE_LETTERS[7] = {
@@ -482,8 +479,8 @@ void UI::drawVirtualKeyboard(AppController& app, float screenW, float screenH,
                              Vector2 mouse) {
     int32_t baseKeyboardOctave =
         MusicUtils::getChallengeBaseOctave(app.currentChallenge_.expectedNotes);
-    int32_t numKeys = (app.selectedGame_ == GameType::GAME_NOTE) ? 7 : 14;
-    int32_t numBlack = (app.selectedGame_ == GameType::GAME_NOTE) ? 5 : 10;
+    int32_t numKeys = app.getSelectedGameKeys();
+    int32_t numBlack = (numKeys / 7) * 5;
     float wW = screenW / (float)numKeys;
     float pianoY = screenH * 0.7f;
     float pianoH = screenH - pianoY;
