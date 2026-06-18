@@ -6,11 +6,7 @@ lang: fr
 
 <!--toc:start-->
 
-- [Modes de Jeu](#modes-de-jeu)
-  - [Gammes Supportées](#gammes-supportées)
-  - [Modes Supportés](#modes-supportés)
 - [Matériel](#matériel)
-- [Dépannage et Résolution des Problèmes](#dépannage-et-résolution-des-problèmes)
 - [Outillage](#outillage)
 - [Compilation & Exécution](#compilation-exécution)
   - [Test Manuel](#test-manuel)
@@ -25,7 +21,6 @@ lang: fr
 - [Contribution](#contribution)
   - [Ajout d’un Transport](#ajout-dun-transport)
 - [Architecture](#architecture)
-  - [Utilitaires](#utilitaires)
 
 <!--toc:end-->
 
@@ -33,10 +28,10 @@ Smart Piano est un système aidant à progresser au piano en s'entrainant à en
 jouer d’une manière optimisant l’apprentissage grâce à des exercices
 intelligents.
 
-Ceci est la partie interface utilisateur, communicant avec le moteur, développée
-avec [raylib]. Elle est spécifiquement développée pour être légère, avoir peu de
-dépendances et être aisée à embarquer sur une cible ARM 32 bit (tel qu’une
-Raspberry Pi 4).
+Ce dépôt est la partie interface utilisateur « idiote », pilotée entièrement par
+le [moteur]. Elle est développée avec [Raylib], spécifiquement pour être légère,
+avoir peu de dépendances et être aisée à embarquer sur une cible Linux ARM64
+(tel qu’une Raspberry Pi 4).
 
 L’utilisateur interagit via un **clavier MIDI** connecté au dispositif Smart
 Piano, sur lequel fonctionne l’application.
@@ -49,52 +44,21 @@ Ce projet, développé dans le cadre du cursus de [Polytech Tours], vise à êtr
 une plateforme ayant un intérêt **pédagogique** à la fois sur le piano et sur le
 développement (`C++`).
 
-## Modes de Jeu
-
-1. Notes `note` : Reconnaissance de notes individuelles
-   - Le joueur doit jouer la note affichée
-
-2. Accords `chord` : Accords simples (sans renversement)
-   - Le joueur doit jouer les 3 notes de l'accord dans n'importe quel ordre
-
-3. Accords renversés `inversed` : Accords avec renversements
-   - Le joueur doit jouer l'accord, mais il est renversé
-
-### Gammes Supportées
-
-- `c` : Do
-- `d` : Ré
-- `e` : Mi
-- `f` : Fa
-- `g` : Sol
-- `a` : La
-- `b` : Si
-
-### Modes Supportés
-
-- `maj` : Majeur
-- `min` : Mineur
+Cette partie interface n’a pas connaissance des modes et règles du jeu, qui lui
+sont entièrement communiquées par le [moteur].
 
 ## Matériel
 
-Smart Piano a été conçu pour fonctionner avec :
+Smart Piano fonctionne sur un ordinateur mono-carte (SBC) [Raspberry Pi 4] Model
+B (Rev 1.1) sous la dernière version de Raspberry Pi OS (Debian 13 Trixie).
 
-- **Raspberry Pi 4**
-  - Sous **Raspberry Pi OS**
-  - MicroSD de **32 Go**
-- **Écran tactile** connecté à la Raspberry Pi (via HDMI)
-- **Clavier MIDI** standard (ex. SWISSONIC EasyKeys49)
+L’interaction avec l’utilisateur se fait bien évidemment avec un clavier MIDI
+(ex. SWISSONIC EasyKeys49), mais aussi via un écran tactile
+[Joy-It RB-LCD-10-2], sur lequel est directement monté le [Raspberry Pi 4] via
+un [boitier-support VESA] imprimé en 3D.
 
 Il est néanmoins possible que l'application fonctionne sur d'autres systèmes
 d’exploitations, architectures ou configurations, sans garantie.
-
-## Dépannage et Résolution des Problèmes
-
-| **Problème**                | **Solution**                                                                        |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| Aucune note n'est détectée  | Vérifier que le **clavier MIDI** est bien **branché** et reconnu avec `aconnect -l` |
-| Connexion au MDJ impossible | S’assurer que le **moteur de jeu** est bien lancé : `./engine`                      |
-| L'application plante        | **Relancer l'application**, voire **redémarrer la Raspberry Pi**                    |
 
 ## Outillage
 
@@ -141,7 +105,7 @@ compilé avec [CMake] (ou automatiquement après un build avec
 
 ### Test Manuel
 
-Lancer l’application, visualiser, intéragir.
+Lancer l’application, visualiser, interagir.
 
 ### Tests Automatiques
 
@@ -295,9 +259,9 @@ Checks: >
 
 ## Journalisation
 
-L’application génère un fichier de journaux (« logs ») qu’il est possible
+L’application génère des fichiers de journaux (« logs ») qu’il est possible
 d’utiliser pour vérifier le bon fonctionnement de Smart Piano ou comprendre
-l’origine des erreurs : `smartpiano.ui.log`.
+l’origine des erreurs : `smartpiano.ui.log`, `smartpiano.ui.err.log`.
 
 ## Auteurs & Licence
 
@@ -328,14 +292,7 @@ L'architecture suit le principe **d'inversion de dépendances** avec des
 interfaces abstraites permettant de découpler les composants et faciliter les
 tests et l'extensibilité.
 
-[`main`](src/main.cpp): Point d'entrée de l'application.
-
-### Utilitaires
-
-[`Logger`](include/Logger.hpp) Système de journalisation thread-safe avec
-rotation automatique de fichiers logs (standard et erreurs), formatage avec
-timestamps.
-
+[boitier-support VESA]: https://makerworld.com/en/models/2940514-raspberry-pi-4-vesa-case
 [CMake]: https://cmake.org
 [Clang]: https://clang.llvm.org
 [clangd]: https://clangd.llvm.org
@@ -347,14 +304,20 @@ timestamps.
 [doctest]: https://github.com/doctest/doctest
 [Doxygen]: https://www.doxygen.nl
 [Doxygen Docs]: https://www.doxygen.nl/manual
+[FluidSynth]: https://www.fluidsynth.org
 [Git]: https://git-scm.com
 [Helix]: https://helix-editor.com
+[Joy-It RB-LCD-10-2]: https://joy-it.net/en/products/RB-LCD-10-2
 [lcov]: https://github.com/linux-test-project/lcov
 [lldb]: https://lldb.llvm.org
 [llvm-cov]: https://llvm.org/docs/CommandGuide/llvm-cov.html
 [Nix]: https://nixos.org
+[NixGL]: https://github.com/nix-community/nixGL
+[moteur]: https://github.com/ProjetISIE/SmartPianoEngine
 [Polytech Tours]: https://polytech.univ-tours.fr
-[raylib]: https://www.raylib.com
+[Raspberry Pi 4]: https://www.raspberrypi.com/products/raspberry-pi-4-model-b
+[Raylib]: https://www.raylib.com
+[RB-LCD-10-2]: https://joy-it.net/en/products/RB-LCD-10-2
 [socat]: http://www.dest-unreach.org/socat
 [tio]: https://github.com/tio/tio
 [VS Code]: https://code.visualstudio.com
