@@ -4,35 +4,35 @@ lang: fr
 
 <!--toc:start-->
 
-- [Protocole Smart Piano](#protocole-smart-piano)
-  - [Format des messages](#format-des-messages)
-  - [Types de messages](#types-de-messages)
-    - [1. Client (interface utilisateur) → Serveur (moteur de jeu)](#1-client-interface-utilisateur-serveur-moteur-de-jeu)
-      - [1.1 Configuration de jeu `config`](#11-configuration-de-jeu-config)
-      - [1.2 Prêt pour le challenge suivant `ready`](#12-prêt-pour-le-challenge-suivant-ready)
-      - [1.3 Abandon `quit`](#13-abandon-quit)
-    - [2. Serveur (moteur de jeu) → Client (interface utilisateur)](#2-serveur-moteur-de-jeu-client-interface-utilisateur)
-      - [2.1 Accusé de réception (de configuration) `ack`](#21-accusé-de-réception-de-configuration-ack)
-      - [2.2 Challenge note `note`](#22-challenge-note-note)
-      - [2.3 Challenge accord `chord`](#23-challenge-accord-chord)
-      - [2.4 Résultat du challenge `result`](#24-résultat-du-challenge-result)
-      - [2.5 Fin de partie `over`](#25-fin-de-partie-over)
-      - [2.6 Erreur `error`](#26-erreur-error)
-  - [Diagramme de séquence](#diagramme-de-séquence)
-    - [Session complète](#session-complète)
-    - [Gestion d'erreur](#gestion-derreur)
-  - [États de la connexion](#états-de-la-connexion)
-  - [Transitions d'états](#transitions-détats)
-  - [Règles de validation](#règles-de-validation)
-  - [Gestion des erreurs de protocole](#gestion-des-erreurs-de-protocole)
-  - [Exemple de Jeu de notes réussi](#exemple-de-jeu-de-notes-réussi)
-  - [Exemple de Jeu d'accords avec erreur](#exemple-de-jeu-daccords-avec-erreur)
+- [Format des messages](#format-des-messages)
+- [Types de messages](#types-de-messages)
+  - [1. Client (interface utilisateur) → Serveur (moteur de jeu)](#1-client-interface-utilisateur-serveur-moteur-de-jeu)
+    - [1.1 Configuration de jeu `config`](#11-configuration-de-jeu-config)
+    - [1.2 Prêt pour le challenge suivant `ready`](#12-prêt-pour-le-challenge-suivant-ready)
+    - [1.3 Abandon `quit`](#13-abandon-quit)
+  - [2. Serveur (moteur de jeu) → Client (interface utilisateur)](#2-serveur-moteur-de-jeu-client-interface-utilisateur)
+    - [2.1 Type de jeu disponible `gametype`](#21-type-de-jeu-disponible-gametype)
+    - [2.2 Accusé de réception (de configuration) `ack`](#22-accusé-de-réception-de-configuration-ack)
+    - [2.3 Challenge note `note`](#23-challenge-note-note)
+    - [2.4 Challenge accord `chord`](#24-challenge-accord-chord)
+    - [2.5 Résultat du challenge `result`](#25-résultat-du-challenge-result)
+    - [2.6 Fin de partie `over`](#26-fin-de-partie-over)
+    - [2.7 Erreur `error`](#27-erreur-error)
+- [Diagramme de séquence](#diagramme-de-séquence)
+  - [Session complète](#session-complète)
+  - [Gestion d'erreur](#gestion-derreur)
+- [États de la connexion](#états-de-la-connexion)
+- [Transitions d'états](#transitions-détats)
+- [Règles de validation](#règles-de-validation)
+- [Gestion des erreurs de protocole](#gestion-des-erreurs-de-protocole)
+- [Exemple de Jeu de notes réussi](#exemple-de-jeu-de-notes-réussi)
+- [Exemple de Jeu d'accords avec erreur](#exemple-de-jeu-daccords-avec-erreur)
 
 <!--toc:end-->
 
 # Protocole Smart Piano
 
-> Version: 1
+> Version: 1.1 (Ajout `gametype`)
 
 Smart Piano utilise un protocole texte simple sur Unix Domain Socket (UDS) pour
 la communication entre le moteur de jeu (serveur) et l'interface utilisateur
@@ -104,10 +104,10 @@ mode=<MODE>
   - `note` : Jeu de reconnaissance de notes
   - `chord` : Jeu d'accords sans renversement
   - `inversed` : Jeu d'accords avec renversements
-- `scale` : Éventuelle gamme musicale voulue (sinon le serveur choisit)
+- `scale` : Éventuelle gamme musicale voulue (sinon choix serveur aléatoire)
   - Valeurs : `c`, `d`, `e`, `f`, `g`, `a`, `b`
   - Cela équivaut en français à "Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"
-- `mode` : Éventuel mode de la gamme voulu (sinon le serveur choisit)
+- `mode` : Éventuel mode de la gamme voulu (sinon choix serveur aléatoire)
   - Valeurs : `maj` pour Majeur, `min` pour mineur
 
 **Exemple** :
@@ -142,7 +142,38 @@ Aucun **champ**, uniquement le type valant `quit`, suivi d’une fin de message.
 
 ### 2. Serveur (moteur de jeu) → Client (interface utilisateur)
 
-#### 2.1 Accusé de réception (de configuration) `ack`
+#### 2.1 Type de jeu disponible `gametype`
+
+Envoyé par le serveur juste après la connexion du client (état `CONNECTED`) pour
+annoncer un type de jeu disponible. Plusieurs messages `gametype` sont envoyés à
+la suite s'il y a plusieurs jeux.
+
+```
+gametype
+id=<ID>
+name=<NOM_AFFICHÉ>
+keys=<NOMBRE_DE_TOUCHES>
+```
+
+**Champs** :
+
+- `id` : Identifiant du jeu (ex : `note`, `chord`…) dans les messages (`config`)
+- `name` : Nom du jeu affiché dans l'interface (ex : `Jeu de notes`…)
+- `keys` : Nombre éventuel de touches blanches du clavier affiché
+  - Par défaut, l’interface peut commencer par n’afficher qu’une octave (`7`),
+    et élargir si plus de touches sont nécessaires pour contenir l’accord du
+    challenge (par contre, ne pas rétrécir pour éviter effet visuel disgracieux)
+
+**Exemple** :
+
+```
+gametype
+id=note
+name=Jeu de notes
+keys=7
+```
+
+#### 2.2 Accusé de réception (de configuration) `ack`
 
 Confirme la réception de la configuration.
 
@@ -170,7 +201,7 @@ message=<MESSAGE>
   - `midi` : Périphérique MIDI non disponible
 - `message` : Éventuel message d'erreur descriptif
 
-#### 2.2 Challenge note `note`
+#### 2.3 Challenge note `note`
 
 Demande au joueur de jouer une note spécifique.
 
@@ -193,7 +224,7 @@ note=c4
 id=1
 ```
 
-#### 2.3 Challenge accord `chord`
+#### 2.4 Challenge accord `chord`
 
 Demande au joueur de jouer un accord spécifique.
 
@@ -235,7 +266,7 @@ notes=e4 g4 c5
 id=6
 ```
 
-#### 2.4 Résultat du challenge `result`
+#### 2.5 Résultat du challenge `result`
 
 Informe le joueur du résultat de sa tentative, clôturant le challenge.
 
@@ -274,7 +305,7 @@ id=2
 incorrect=d4
 ```
 
-#### 2.5 Fin de partie `over`
+#### 2.6 Fin de partie `over`
 
 Indique la fin de la session de jeu avec un récapitulatif.
 
@@ -303,7 +334,7 @@ perfect=10
 total=10
 ```
 
-#### 2.6 Erreur `error`
+#### 2.7 Erreur `error`
 
 Signale une erreur détectée par le serveur.
 
@@ -344,6 +375,10 @@ message=Message mal formé: champ 'id' manquant
 
 ```
 Client                       Serveur
+  |                             |
+  |<-- gametype (note) ---------|
+  |<-- gametype (chord) --------|
+  |<-- gametype (...) ----------|
   |                             |
   |--- config ----------------->|
   |                             |
@@ -430,6 +465,18 @@ invalide), le serveur doit :
 ## Exemple de Jeu de notes réussi
 
 ```
+[Connexion du client]
+← gametype
+← id=note
+← name=Jeu de notes
+← keys=7
+←
+← gametype
+← id=chord
+← name=Jeu d'accords
+← keys=14
+←
+
 → config
 → game=note
 → scale=c
