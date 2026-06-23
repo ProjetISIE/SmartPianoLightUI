@@ -5,8 +5,8 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1781790235,
-        "narHash": "sha256-JsXumEGfd1nWPSwgVy9Le11vXzquycBcNZ7/QW65FXg=",
+        "lastModified": 1781794868,
+        "narHash": "sha256-cCuh9ASZJL5OYR/4StQkM725pRdk+AXRtiC1xVxEoTM=",
         "type": "tarball",
         "url": "https://github.com/ProjetISIE/SmartPianoEngine/archive/main.tar.gz"
       },
