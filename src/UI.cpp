@@ -58,22 +58,38 @@ void UI::drawStaff(Rectangle rec, const std::vector<std::string>& notes,
     DrawLineEx({rec.x + rec.width, centerY - 2 * lineSpacing},
                {rec.x + rec.width, centerY + 2 * lineSpacing}, 2, color);
 
-    // --- Clé de Sol simplifiée ---
-    float cx = rec.x + 30.0f;
-    float cy = centerY + lineSpacing; // Ligne du Sol (G4)
-    // Spirale centrale
-    DrawCircleLines((int)cx, (int)cy, lineSpacing * 0.5f, color);
-    // Cercle supérieur (boucle)
-    DrawCircleLines((int)cx, (int)(cy - lineSpacing), lineSpacing * 0.8f,
-                    color);
-    // Ligne verticale
-    DrawLineEx({cx + lineSpacing * 0.3f, centerY - 2.5f * lineSpacing},
-               {cx + lineSpacing * 0.3f, centerY + 3.0f * lineSpacing}, 2.0f,
-               color);
-    // Crochet bas
-    DrawCircleLines((int)(cx - lineSpacing * 0.1f),
-                    (int)(centerY + 3.0f * lineSpacing), lineSpacing * 0.4f,
-                    color);
+    static Texture2D clefTexture{};
+    static bool clefTextureLoaded = false;
+    if (!clefTextureLoaded) {
+        Image img = LoadImage("GClef.svg"); // L'image a été redimensionnée dans
+                                            // le fichier SVG (viewBox)
+        if (img.data != nullptr) {
+            clefTexture = LoadTextureFromImage(img);
+            SetTextureFilter(clefTexture, TEXTURE_FILTER_BILINEAR);
+            UnloadImage(img);
+        }
+        clefTextureLoaded = true;
+    }
+
+    if (clefTexture.id != 0) {
+        float targetHeight = 6.0f * lineSpacing;
+        float scale = targetHeight / 400.0f;
+        float cx = rec.x + 10.0f;
+        float cy = centerY - 2.5f * lineSpacing;
+        DrawTextureEx(clefTexture, {cx, cy}, 0.0f, scale, color);
+    } else {
+        float cx = rec.x + 30.0f;
+        float cyG = centerY + lineSpacing; // Ligne du Sol (G4)
+        DrawCircleLines((int)cx, (int)cyG, lineSpacing * 0.5f, color);
+        DrawCircleLines((int)cx, (int)(cyG - lineSpacing), lineSpacing * 0.8f,
+                        color);
+        DrawLineEx({cx + lineSpacing * 0.3f, centerY - 2.5f * lineSpacing},
+                   {cx + lineSpacing * 0.3f, centerY + 3.0f * lineSpacing},
+                   2.0f, color);
+        DrawCircleLines((int)(cx - lineSpacing * 0.1f),
+                        (int)(centerY + 3.0f * lineSpacing), lineSpacing * 0.4f,
+                        color);
+    }
 
     float noteX = rec.x + rec.width / 2.0f;
     float noteRadius = lineSpacing * 0.45f;
@@ -83,20 +99,20 @@ void UI::drawStaff(Rectangle rec, const std::vector<std::string>& notes,
         if (!nk.valid) continue;
 
         float whitePos = static_cast<float>(nk.index);
-        float noteY = centerY + (2.0f - whitePos / 2.0f) * lineSpacing;
+        float noteY = centerY + (3.0f - whitePos / 2.0f) * lineSpacing;
 
         // Ledger lines (lignes supplémentaires)
         if (nk.index <= 0) { // C4 et en dessous
             for (int p = 0; p >= nk.index; p -= 2) {
                 float ly = centerY +
-                           (2.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
+                           (3.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
                 DrawLineEx({noteX - noteRadius * 1.5f, ly},
                            {noteX + noteRadius * 1.5f, ly}, 2, color);
             }
         } else if (nk.index >= 12) { // A5 et au dessus
             for (int p = 12; p <= nk.index; p += 2) {
                 float ly = centerY +
-                           (2.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
+                           (3.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
                 DrawLineEx({noteX - noteRadius * 1.5f, ly},
                            {noteX + noteRadius * 1.5f, ly}, 2, color);
             }
