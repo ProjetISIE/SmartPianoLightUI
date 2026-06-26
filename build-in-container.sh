@@ -46,4 +46,6 @@ echo "--> Packaging binaries..."
 mkdir -p deploy
 cp build-cross/src/main deploy/smart-piano-ui
 cp /tmp/engine-install/bin/engine deploy/engine
+cp GClef.png deploy/GClef.png || true
+cp logo.png deploy/logo.png || true
 chmod 777 deploy/smart-piano-ui deploy/engine
