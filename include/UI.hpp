@@ -30,8 +30,8 @@ class UI {
     /**
      * @brief Dessine une portée de 5 lignes avec les notes indiquées
      */
-    static void drawStaff(Rectangle rec, const std::vector<std::string>& notes,
-                          Color color);
+    static void drawStaff(const AppController& app, Rectangle rec,
+                          const std::vector<std::string>& notes, Color color);
 
     static void drawProfileSelect(AppController& app, Vector2 mouse,
                                   float screenW, float screenH);

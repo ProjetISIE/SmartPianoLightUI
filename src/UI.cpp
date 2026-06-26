@@ -41,8 +41,8 @@ bool UI::drawButton(Rectangle rec, const char* text, Color color, Vector2 mouse,
     return hover;
 }
 
-void UI::drawStaff(Rectangle rec, const std::vector<std::string>& notes,
-                   Color color) {
+void UI::drawStaff(const AppController& app, Rectangle rec,
+                   const std::vector<std::string>& notes, Color color) {
     float lineSpacing = rec.height / 6.0f;
     float centerY = rec.y + rec.height / 2.0f;
 
@@ -95,7 +95,36 @@ void UI::drawStaff(Rectangle rec, const std::vector<std::string>& notes,
     float noteX = rec.x + rec.width / 2.0f;
     float noteRadius = lineSpacing * 0.45f;
 
-    for (const auto& note : notes) {
+    for (std::string note : notes) {
+        // Optionnel: mapper la note reçue aux notes de la gamme sélectionnée.
+        // L'engin peut envoyer "d#" pour "eb". Si "eb" est dans la gamme, on le
+        // remplace.
+        std::vector<std::string> scaleNotes = MusicUtils::getScaleNotesList(
+            app.selectedScale_, app.selectedMode_);
+        if (note.size() >= 2 && note[1] == '#') {
+            std::string base = note.substr(0, 2); // ex: "d#"
+            std::string octave = note.substr(2);  // ex: "4"
+            std::string mappedFlat = "";
+            if (base == "c#") mappedFlat = "db";
+            else if (base == "d#") mappedFlat = "eb";
+            else if (base == "f#") mappedFlat = "gb";
+            else if (base == "g#") mappedFlat = "ab";
+            else if (base == "a#") mappedFlat = "bb";
+
+            if (!mappedFlat.empty()) {
+                bool flatInScale = false;
+                for (const auto& sn : scaleNotes) {
+                    if (sn == mappedFlat) {
+                        flatInScale = true;
+                        break;
+                    }
+                }
+                if (flatInScale) {
+                    note = mappedFlat + octave;
+                }
+            }
+        }
+
         NoteKey nk = MusicUtils::resolveKey(note);
         if (!nk.valid) continue;
 
@@ -306,7 +335,7 @@ void UI::drawPlay(AppController& app, Vector2 mouse, float screenW,
 
         if (app.selectedNotation_ == NotationMode::STAFF &&
             !app.currentChallenge_.expectedNotes.empty()) {
-            drawStaff(rChal, app.currentChallenge_.expectedNotes,
+            drawStaff(app, rChal, app.currentChallenge_.expectedNotes,
                       kVertEclatant);
         } else {
             DrawRectangleLinesEx(rChal, 3, kVertEclatant);

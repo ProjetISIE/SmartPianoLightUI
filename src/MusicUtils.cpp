@@ -168,12 +168,22 @@ NoteKey resolveKey(const std::string& note, int32_t baseKeyboardOctave) {
         return {false, whiteIdx + octaveOffset * 7, true};
     }
 
-    static const int32_t WHITE_TO_BLACK_PER_OCTAVE[7] = {0, 1, -1, 2, 3, 4, -1};
-    int32_t localWhiteIdx = whiteIdx % 7;
-    int32_t bkLocal = WHITE_TO_BLACK_PER_OCTAVE[localWhiteIdx];
-    if (bkLocal < 0) return {};
+    int32_t bkWhiteIdx = whiteIdx;
+    if (mod == "b") {
+        bkWhiteIdx -= 1;
+        // handle underflow for negative bkWhiteIdx if needed
+        if (bkWhiteIdx < 0) {
+            bkWhiteIdx += 7;
+            octaveOffset -= 1;
+        }
+    }
 
-    int32_t bkIdx = (whiteIdx / 7) * 5 + bkLocal + octaveOffset * 5;
+    static const int32_t WHITE_TO_BLACK_PER_OCTAVE[7] = {0, 1, -1, 2, 3, 4, -1};
+    int32_t localWhiteIdx = bkWhiteIdx % 7;
+    int32_t bkLocal = WHITE_TO_BLACK_PER_OCTAVE[localWhiteIdx];
+    if (bkLocal < 0) return {}; // e.g. E# or Cb
+
+    int32_t bkIdx = (bkWhiteIdx / 7) * 5 + bkLocal + octaveOffset * 5;
     return {true, bkIdx, true};
 }
 
