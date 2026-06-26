@@ -52,6 +52,29 @@ void UI::drawStaff(Rectangle rec, const std::vector<std::string>& notes,
         DrawLineEx({rec.x, y}, {rec.x + rec.width, y}, 2, color);
     }
 
+    // Barres de mesure de début et de fin pour fermer la portée
+    DrawLineEx({rec.x, centerY - 2 * lineSpacing},
+               {rec.x, centerY + 2 * lineSpacing}, 2, color);
+    DrawLineEx({rec.x + rec.width, centerY - 2 * lineSpacing},
+               {rec.x + rec.width, centerY + 2 * lineSpacing}, 2, color);
+
+    // --- Clé de Sol simplifiée ---
+    float cx = rec.x + 30.0f;
+    float cy = centerY + lineSpacing; // Ligne du Sol (G4)
+    // Spirale centrale
+    DrawCircleLines((int)cx, (int)cy, lineSpacing * 0.5f, color);
+    // Cercle supérieur (boucle)
+    DrawCircleLines((int)cx, (int)(cy - lineSpacing), lineSpacing * 0.8f,
+                    color);
+    // Ligne verticale
+    DrawLineEx({cx + lineSpacing * 0.3f, centerY - 2.5f * lineSpacing},
+               {cx + lineSpacing * 0.3f, centerY + 3.0f * lineSpacing}, 2.0f,
+               color);
+    // Crochet bas
+    DrawCircleLines((int)(cx - lineSpacing * 0.1f),
+                    (int)(centerY + 3.0f * lineSpacing), lineSpacing * 0.4f,
+                    color);
+
     float noteX = rec.x + rec.width / 2.0f;
     float noteRadius = lineSpacing * 0.45f;
 
@@ -249,13 +272,13 @@ void UI::drawPlay(AppController& app, Vector2 mouse, float screenW,
         // Zone de défi
         Rectangle rChal = {screenW / 2.0f - 175.0f, screenH * 0.25f, 350.0f,
                            200.0f};
-        DrawRectangleLinesEx(rChal, 3, kVertEclatant);
 
         if (app.selectedNotation_ == NotationMode::STAFF &&
             !app.currentChallenge_.expectedNotes.empty()) {
             drawStaff(rChal, app.currentChallenge_.expectedNotes,
                       kVertEclatant);
         } else {
+            DrawRectangleLinesEx(rChal, 3, kVertEclatant);
             std::string display;
             if (app.currentChallenge_.expectedNotes.empty()) {
                 display = "Attente…";
