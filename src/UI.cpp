@@ -61,8 +61,9 @@ void UI::drawStaff(Rectangle rec, const std::vector<std::string>& notes,
     static Texture2D clefTexture{};
     static bool clefTextureLoaded = false;
     if (!clefTextureLoaded) {
-        Image img = LoadImage("GClef.svg"); // L'image a été redimensionnée dans
-                                            // le fichier SVG (viewBox)
+        Image img =
+            LoadImage("GClef.png"); // Changé en .png car Raylib ne supporte pas
+                                    // le SVG sur cette installation
         if (img.data != nullptr) {
             clefTexture = LoadTextureFromImage(img);
             SetTextureFilter(clefTexture, TEXTURE_FILTER_BILINEAR);
@@ -98,19 +99,33 @@ void UI::drawStaff(Rectangle rec, const std::vector<std::string>& notes,
         NoteKey nk = MusicUtils::resolveKey(note);
         if (!nk.valid) continue;
 
-        float whitePos = static_cast<float>(nk.index);
+        // Calculer la position verticale sur la portée uniquement basée sur la
+        // note blanche
+        int whiteIndex = 0;
+        char letter = note.empty() ? 'c' : (char)std::tolower(note[0]);
+        int octave = 4;
+        for (char c : note) {
+            if (std::isdigit(c)) octave = c - '0';
+        }
+        static constexpr int WHITE_MAP[7] = {
+            5, 6, 0, 1, 2, 3, 4}; // a=5, b=6, c=0, d=1, e=2, f=3, g=4
+        if (letter >= 'a' && letter <= 'g') {
+            whiteIndex = WHITE_MAP[letter - 'a'] + (octave - 4) * 7;
+        }
+
+        float whitePos = static_cast<float>(whiteIndex);
         float noteY = centerY + (3.0f - whitePos / 2.0f) * lineSpacing;
 
         // Ledger lines (lignes supplémentaires)
-        if (nk.index <= 0) { // C4 et en dessous
-            for (int p = 0; p >= nk.index; p -= 2) {
+        if (whiteIndex <= 0) { // C4 et en dessous
+            for (int p = 0; p >= whiteIndex; p -= 2) {
                 float ly = centerY +
                            (3.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
                 DrawLineEx({noteX - noteRadius * 1.5f, ly},
                            {noteX + noteRadius * 1.5f, ly}, 2, color);
             }
-        } else if (nk.index >= 12) { // A5 et au dessus
-            for (int p = 12; p <= nk.index; p += 2) {
+        } else if (whiteIndex >= 12) { // A5 et au dessus
+            for (int p = 12; p <= whiteIndex; p += 2) {
                 float ly = centerY +
                            (3.0f - static_cast<float>(p) / 2.0f) * lineSpacing;
                 DrawLineEx({noteX - noteRadius * 1.5f, ly},
@@ -124,7 +139,7 @@ void UI::drawStaff(Rectangle rec, const std::vector<std::string>& notes,
 
         // Hampe (stem)
         float stemLen = lineSpacing * 3.0f;
-        if (nk.index < 6) { // Sous la ligne du milieu (B4)
+        if (whiteIndex < 6) { // Sous la ligne du milieu (B4)
             DrawLineEx({noteX + noteRadius * 1.1f, noteY},
                        {noteX + noteRadius * 1.1f, noteY - stemLen}, 2, color);
         } else {
